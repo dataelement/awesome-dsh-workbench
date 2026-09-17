@@ -26,7 +26,7 @@ DSH Desktop 工作台市场的目录与投稿准备仓库。工作台是面向�
 
 - 阅读 [投稿指南](CONTRIBUTING.md) 了解流程与材料要求。
 - 阅读 [验收清单](docs/review-checklist.md) 了解审核者会核对什么（提交者也可对照自查）。
-- 按 [投稿材料模板](examples/submission.md) 准备说明。
+- 按 [投稿材料模板](examples/submission.md) 准备说明；材料保存为 `submissions/<工作台标识>/<版本>.md`（如 `submissions/dsh-site-selection/1.2.0.md`）。
 - 通过 Pull Request 提交；每个新版本都需要维护者验收，通过后才能收录到 [目录](catalog/README.md)。
 
 个人创建的工作台可以先在本地使用，不等于已获市场收录。
