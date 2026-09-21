@@ -26,6 +26,19 @@ test('accepts the documented YAML and derives generated fields', async () => {
   })
 })
 
+test('keeps the agreed seven categories', async () => {
+  const categories = JSON.parse(await fs.readFile(path.join(ROOT, 'data/categories.json'), 'utf8'))
+  assert.deepEqual(categories.map(({ id }) => id), [
+    'development',
+    'productivity',
+    'content',
+    'data',
+    'research',
+    'operations',
+    'other'
+  ])
+})
+
 test('rejects unknown author fields', async () => {
   const validate = await createValidator()
   assert.equal(validate({

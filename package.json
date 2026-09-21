@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "npm run validate && npm run generate:check && npm test",
+    "check": "npm run validate && npm test && npm run generate && npm run generate:check",
     "validate": "node scripts/validate-data.mjs",
     "validate:pr": "node scripts/validate-pr.mjs",
     "generate": "node scripts/generate-catalog.mjs",

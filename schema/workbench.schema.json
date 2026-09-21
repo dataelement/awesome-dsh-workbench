@@ -14,7 +14,7 @@
     "name": { "type": "string", "minLength": 1, "maxLength": 60 },
     "category": {
       "type": "string",
-      "enum": ["development", "productivity", "content", "data", "other"]
+      "enum": ["development", "productivity", "content", "data", "research", "operations", "other"]
     },
     "description": {
       "type": "object",

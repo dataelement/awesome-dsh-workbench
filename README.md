@@ -13,7 +13,7 @@ DSH Desktop 工作台市场的公开目录。作者保管自己的源码和发�
 
 ## 投稿
 
-阅读 [投稿指南](CONTRIBUTING.md)，复制 [YAML 示例](examples/workbench.yml)，每次只修改一个 `data/workbenches/owner__repo.yml`，并提交脚本生成的 `dist/catalog.json`。合并代表进入公开目录，不代表 DSH 团队接管工作台源码或后续维护。
+阅读 [投稿指南](CONTRIBUTING.md)，复制 [YAML 示例](examples/workbench.yml)，每次只提交一个 `data/workbenches/owner__repo.yml`。`dist/catalog.json` 由 CI 生成，投稿者不要修改或提交。合并代表进入公开目录，不代表 DSH 团队接管工作台源码或后续维护。
 
 ## 本地检查
 
@@ -22,6 +22,6 @@ npm ci
 npm run check
 ```
 
-`npm run generate` 会重新生成 `dist/catalog.json`。生成结果按仓库 ID 排序且不含时间戳，相同输入始终得到相同文件。
+`npm run check` 会在本机重新生成 `dist/catalog.json` 供检查，但投稿时不要提交它。生成结果按仓库 ID 排序且不含时间戳，相同输入始终得到相同文件。
 
 字段说明见 [目录协议](catalog/README.md)，审核标准见 [验收清单](docs/review-checklist.md)。

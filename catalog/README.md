@@ -13,6 +13,8 @@
 | `release.url` | 否 | 同一仓库固定版本下的 `.tgz` Release 资源 |
 | `release.sha256` | 随 release | 下载文件的 64 位小写 SHA-256 |
 
-不接受 schema 以外的字段。`dist/catalog.json` 是生成文件，包含 `id`、`owner`、`repository` 和 `distribution.type` 等派生字段。请勿手工编辑。
+分类目前有七个：开发 `development`、效率 `productivity`、内容 `content`、数据 `data`、调研 `research`、运营 `operations`、其他 `other`。
+
+不接受 schema 以外的字段。`dist/catalog.json` 是 CI 生成文件，包含 `id`、`owner`、`repository` 和 `distribution.type` 等派生字段。投稿者不要编辑或提交它。
 
 构建过程只读取仓库内文件，不访问 GitHub、npm 或其他网络服务。目录中没有条目时，仍会生成结构完整的空目录。

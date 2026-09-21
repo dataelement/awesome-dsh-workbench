@@ -2,7 +2,7 @@
 
 ## 自动检查
 
-- [ ] 投稿只修改一个 `data/workbenches/owner__repo.yml` 和脚本生成的 `dist/catalog.json`。
+- [ ] 投稿只修改一个 `data/workbenches/owner__repo.yml`，没有修改生成的 `dist/catalog.json`。
 - [ ] YAML 通过严格 schema 校验，没有多余字段。
 - [ ] 文件名和 `url` 指向同一个 GitHub owner/repo。
 - [ ] 分类存在，生成的 `dist/catalog.json` 没有差异。

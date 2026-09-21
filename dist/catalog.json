@@ -26,6 +26,18 @@
       }
     },
     {
+      "id": "research",
+      "name": {
+        "zh": "调研"
+      }
+    },
+    {
+      "id": "operations",
+      "name": {
+        "zh": "运营"
+      }
+    },
+    {
       "id": "other",
       "name": {
         "zh": "其他"

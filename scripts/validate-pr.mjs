@@ -20,7 +20,6 @@ if (catalogChanges.length === 0) {
 }
 
 const errors = []
-const allowedFiles = new Set(['dist/catalog.json'])
 if (catalogChanges.length !== 1) errors.push('工作台投稿 PR 必须只修改一个 data/workbenches/owner__repo.yml 文件')
 const change = catalogChanges[0]
 if (change.status !== 'A' && change.status !== 'M') errors.push('目录条目只能新增或修改，删除和重命名请由维护者单独处理')
@@ -28,7 +27,7 @@ const file = change.paths.at(-1)
 if (!/^data\/workbenches\/[A-Za-z0-9_.-]+__[A-Za-z0-9_.-]+\.yml$/.test(file)) errors.push(`路径不符合 data/workbenches/owner__repo.yml：${file}`)
 for (const { paths } of changes) {
   for (const changedFile of paths) {
-    if (changedFile !== file && !allowedFiles.has(changedFile)) errors.push(`投稿 PR 包含无关文件：${changedFile}`)
+    if (changedFile !== file) errors.push(`投稿 PR 包含无关文件：${changedFile}`)
   }
 }
 

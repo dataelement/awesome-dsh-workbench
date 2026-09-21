@@ -3,5 +3,7 @@
   { "id": "productivity", "name": { "zh": "效率" } },
   { "id": "content", "name": { "zh": "内容" } },
   { "id": "data", "name": { "zh": "数据" } },
+  { "id": "research", "name": { "zh": "调研" } },
+  { "id": "operations", "name": { "zh": "运营" } },
   { "id": "other", "name": { "zh": "其他" } }
 ]

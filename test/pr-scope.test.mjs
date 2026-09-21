@@ -30,7 +30,7 @@ test('allows exactly one catalog YAML change', async () => {
   assert.equal(result.status, 0, result.stderr)
 })
 
-test('allows the deterministic catalog beside one YAML', async () => {
+test('rejects generated dist changes beside one YAML', async () => {
   const { directory, git, base } = await repository()
   await fs.mkdir(path.join(directory, 'data/workbenches'), { recursive: true })
   await fs.mkdir(path.join(directory, 'dist'), { recursive: true })
@@ -39,7 +39,8 @@ test('allows the deterministic catalog beside one YAML', async () => {
   git('add', '.')
   git('commit', '-qm', 'entry and catalog')
   const result = spawnSync(process.execPath, [script, base, 'HEAD'], { cwd: directory, encoding: 'utf8' })
-  assert.equal(result.status, 0, result.stderr)
+  assert.equal(result.status, 1)
+  assert.match(result.stderr, /dist\/catalog\.json/)
 })
 
 test('rejects catalog data mixed with unrelated changes', async () => {
