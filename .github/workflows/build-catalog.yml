@@ -29,10 +29,20 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm run check
+      - uses: actions/cache/restore@v4
+        with:
+          path: .cache/metrics.json
+          key: workbench-metrics-v1-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: workbench-metrics-v1-
       - name: Build data/index.json
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          METRICS_FORCE: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && '1' || '0' }}
         run: npm run probe
+      - uses: actions/cache/save@v4
+        with:
+          path: .cache/metrics.json
+          key: workbench-metrics-v1-${{ github.run_id }}-${{ github.run_attempt }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: data/
