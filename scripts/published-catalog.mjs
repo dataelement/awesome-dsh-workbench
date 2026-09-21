@@ -22,9 +22,6 @@ export async function validatePublishedCatalog(catalog) {
     ids.add(id)
     const install = item.distribution
     if (item.version !== install.version || semver.valid(item.version) !== item.version) throw new Error('发布目录安装版本不一致')
-    for (const range of [install.compatibility.desktopWorkbenches, install.compatibility.harness]) {
-      if (!semver.validRange(range)) throw new Error('发布目录兼容范围无效')
-    }
     if (install.type === 'github-source' && (install.commit !== item.sourceCommit || install.url !== item.url)) throw new Error('源码安装位置不一致')
     if (install.type === 'github-release' && !new URL(install.url).pathname.toLowerCase().startsWith(`/${id}/releases/download/`)) throw new Error('安装包属于其他仓库')
     for (const image of item.screenshots) {

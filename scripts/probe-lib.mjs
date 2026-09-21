@@ -28,22 +28,25 @@ function sameRepository(value, owner, repository) {
   return normalized === `https://github.com/${owner}/${repository}`.toLowerCase()
 }
 
-export function validateManifest(manifest, pkg) {
-  const errors = []
-  if (manifest?.schemaVersion !== 1) errors.push('schemaVersion 必须为 1')
-  if (!/^[a-z][a-z0-9-]{0,79}$/.test(manifest?.id || '')) errors.push('id 无效')
-  for (const field of ['title', 'description', 'version', 'entry']) {
-    if (typeof manifest?.[field] !== 'string' || !manifest[field].trim()) errors.push(`缺少 ${field}`)
+function clientEntry(pkg) {
+  const value = pkg?.exports?.['./client']
+  if (typeof value === 'string') return value
+  if (value && typeof value === 'object') {
+    for (const key of ['import', 'default']) if (typeof value[key] === 'string') return value[key]
   }
-  if (pkg && manifest?.version !== pkg.version) errors.push('workbench.json 与 package.json 版本不一致')
-  if (!manifest?.compatibility?.desktopWorkbenches || !manifest?.compatibility?.harness) errors.push('缺少 compatibility 要求')
-  if (!Array.isArray(manifest?.capabilities) || !manifest.capabilities.every((value) => typeof value === 'string')) errors.push('capabilities 必须是字符串数组')
-  if (!manifest?.version || semver.valid(manifest.version) !== manifest.version) errors.push('version 必须为完整 SemVer')
-  if (!safeRelativePath(manifest?.entry, { allowDotPrefix: true })) errors.push('entry 必须是安全相对路径')
+}
+
+export function validatePackage(pkg, { owner, repository } = {}) {
+  const errors = []
+  if (typeof pkg?.name !== 'string' || !pkg.name.trim()) errors.push('package.json 缺少 name')
+  if (!pkg?.version || semver.valid(pkg.version) !== pkg.version) errors.push('package.json version 必须为完整 SemVer')
+  if (owner && repository && !sameRepository(pkg.repository, owner, repository)) errors.push('package.json repository 必须指向条目仓库')
   if (!Array.isArray(pkg?.dsh?.client?.inject) || !pkg.dsh.client.inject.includes('dsh-desktop-workbenches')) errors.push('client 必须注入 dsh-desktop-workbenches')
   if (!safeRelativePath(pkg?.dsh?.bundle?.patch, { allowDotPrefix: true })) errors.push('缺少安全的 dsh.bundle.patch 路径')
+  const entry = clientEntry(pkg)
+  if (!safeRelativePath(entry, { allowDotPrefix: true })) errors.push('缺少安全的 exports["./client"] 客户端入口')
   if (errors.length) throw new ProbeError('invalid-manifest', errors.join('；'))
-  return manifest
+  return { entry, patch: pkg.dsh.bundle.patch }
 }
 
 async function fetchJsonFile(fetchImpl, owner, repository, sha, name, required = true) {
@@ -55,7 +58,7 @@ async function fetchJsonFile(fetchImpl, owner, repository, sha, name, required =
   try { return JSON.parse((await readBounded(response, 256 * 1024, name)).toString()) } catch { throw new ProbeError('invalid-manifest', `${name} 不是有效 JSON`) }
 }
 
-async function inspectPackage(fetchImpl, url, { expectedId, expectedVersion, expectedName, integrity } = {}) {
+async function inspectPackage(fetchImpl, url, { expectedVersion, expectedName, integrity, owner, repository } = {}) {
   const response = await fetchImpl(url)
   if (!response.ok) throw new ProbeError('release-unavailable', `Release 下载失败（HTTP ${response.status}）`, { incomplete: response.status === 429 || response.status >= 500 })
   let bytes
@@ -83,32 +86,30 @@ async function inspectPackage(fetchImpl, url, { expectedId, expectedVersion, exp
     } })
     if (names.some((name) => !safeRelativePath(name.replace(/\/$/, '')))) throw new Error('包含不安全路径')
     await tar.x({ file: archive, cwd: unpacked, strict: true, preservePaths: false })
-    const manifests = names.filter((name) => /(^|\/)workbench\.json$/.test(name))
-    if (manifests.length !== 1) throw new Error('包必须包含唯一 workbench.json')
+    const manifests = names.filter((name) => /(^|\/)package\.json$/.test(name)).sort((a, b) => a.split('/').length - b.split('/').length)
     const manifestName = manifests[0]
-    if (!manifestName) throw new Error('缺少 workbench.json')
+    if (!manifestName || (manifests[1] && manifests[1].split('/').length === manifestName.split('/').length)) throw new Error('包必须包含唯一的顶层 package.json')
     const root = path.dirname(path.join(unpacked, manifestName))
-    const manifest = JSON.parse(await fs.readFile(path.join(unpacked, manifestName), 'utf8'))
-    const pkg = JSON.parse(await fs.readFile(path.join(root, 'package.json'), 'utf8'))
-    validateManifest(manifest, pkg)
-    if (!(await fs.stat(path.join(root, pkg.dsh.bundle.patch)).catch(() => null))?.isFile()) throw new Error('Release 包缺少 bundle patch 文件')
-    const entry = path.resolve(root, manifest.entry)
+    const pkg = JSON.parse(await fs.readFile(path.join(unpacked, manifestName), 'utf8'))
+    const contract = validatePackage(pkg, { owner, repository })
+    if (!(await fs.stat(path.join(root, contract.patch)).catch(() => null))?.isFile()) throw new Error('Release 包缺少 bundle patch 文件')
+    const entry = path.resolve(root, contract.entry)
     const relative = path.relative(root, entry)
     if (!relative || relative.startsWith('..') || path.isAbsolute(relative) || !(await fs.stat(entry).catch(() => null))?.isFile()) {
       throw new ProbeError('release-invalid', 'Release 包中的 entry 不存在或路径不安全')
     }
-    if (manifest.id !== expectedId || (expectedVersion && manifest.version !== expectedVersion) || (expectedName && pkg.name !== expectedName)) throw new ProbeError('package-mismatch', '安装包 ID/版本/包名与来源不一致')
-    packageManifest = manifest
+    if ((expectedVersion && pkg.version !== expectedVersion) || (expectedName && pkg.name !== expectedName)) throw new ProbeError('package-mismatch', '安装包版本或包名与来源不一致')
+    packageManifest = pkg
   } catch (error) {
     if (error instanceof ProbeError) throw error
     throw new ProbeError('release-invalid', `Release 包检查失败：${error.message}`)
   } finally {
     await fs.rm(directory, { recursive: true, force: true })
   }
-  return { sha256: digest, bytes: bytes.length, version: packageManifest.version, compatibility: packageManifest.compatibility }
+  return { sha256: digest, bytes: bytes.length, version: packageManifest.version }
 }
 
-async function resolveDistribution(fetchImpl, entry, owner, repository, commit, manifest, pkg) {
+async function resolveDistribution(fetchImpl, entry, owner, repository, commit, pkg, contract) {
   if (pkg.name && sameRepository(pkg.repository, owner, repository)) {
     const response = await fetchImpl(`https://registry.npmjs.org/${encodeURIComponent(pkg.name)}/latest`)
     if (response.status !== 404) {
@@ -117,7 +118,7 @@ async function resolveDistribution(fetchImpl, entry, owner, repository, commit, 
         const url = new URL(published.dist?.tarball || '')
         if (url.origin !== 'https://registry.npmjs.org' || url.username || url.password || url.hash) throw new ProbeError('invalid-npm', 'npm 安装包必须来自官方 registry')
         if (!semver.valid(published.version) || typeof published.dist?.integrity !== 'string') throw new ProbeError('invalid-npm', 'npm 缺少版本或完整性校验值')
-        const checked = await inspectPackage(fetchImpl, url.href, { expectedId: manifest.id, expectedName: pkg.name, expectedVersion: published.version, integrity: published.dist.integrity })
+        const checked = await inspectPackage(fetchImpl, url.href, { expectedName: pkg.name, expectedVersion: published.version, integrity: published.dist.integrity, owner, repository })
         return { type: 'npm', name: pkg.name, url: url.href, integrity: published.dist.integrity, ...checked }
       }
     }
@@ -134,14 +135,14 @@ async function resolveDistribution(fetchImpl, entry, owner, repository, commit, 
     }
     const parsed = new URL(url)
     if (parsed.origin !== 'https://github.com' || parsed.username || parsed.password || !parsed.pathname.toLowerCase().startsWith(`/${owner}/${repository}/releases/download/`.toLowerCase()) || parsed.search || parsed.hash) throw new ProbeError('release-invalid', 'tarball 必须解析为同仓库的固定版本资源')
-    return { type: 'github-release', url, ...await inspectPackage(fetchImpl, url, { expectedId: manifest.id }) }
+    return { type: 'github-release', url, ...await inspectPackage(fetchImpl, url, { owner, repository }) }
   }
-  for (const file of [pkg.dsh.bundle.patch, manifest.entry]) {
+  for (const file of [contract.patch, contract.entry]) {
     const response = await fetchImpl(sourceFileUrl(owner, repository, commit, file))
     if (!response.ok) throw new ProbeError('invalid-manifest', `源码缺少 ${file}`, { incomplete: response.status >= 500 || response.status === 429 })
     await readBounded(response, MAX_PACKAGE_BYTES, file)
   }
-  return { type: 'github-source', url: entry.url.replace(/\/$/, ''), commit, version: manifest.version, compatibility: manifest.compatibility }
+  return { type: 'github-source', url: entry.url.replace(/\/$/, ''), commit, version: pkg.version }
 }
 
 function sourceFileUrl(owner, repository, commit, file) {
@@ -159,11 +160,10 @@ export async function probeEntry(record, { fetchImpl = fetch } = {}) {
   if (!repo.license?.spdx_id || repo.license.spdx_id === 'NOASSERTION') throw new ProbeError('missing-license', '仓库没有可识别的许可证')
   const commit = await responseJson(await fetchImpl(`https://api.github.com/repos/${owner}/${repository}/commits/${encodeURIComponent(repo.default_branch)}`), '源码 commit')
   if (!/^[a-f0-9]{40}$/.test(commit.sha || '')) throw new ProbeError('unavailable', '未解析到完整源码 commit')
-  const manifest = await fetchJsonFile(fetchImpl, owner, repository, commit.sha, 'workbench.json')
   const pkg = await fetchJsonFile(fetchImpl, owner, repository, commit.sha, 'package.json')
-  validateManifest(manifest, pkg)
+  const contract = validatePackage(pkg, { owner, repository })
   const name = entry.name
-  const distribution = await resolveDistribution(fetchImpl, entry, owner, repository, commit.sha, manifest, pkg)
+  const distribution = await resolveDistribution(fetchImpl, entry, owner, repository, commit.sha, pkg, contract)
   const screenshots = []
   for (const [index, image] of entry.screenshots.entries()) {
     const url = screenshotUrl(image, owner, repository)
@@ -178,7 +178,6 @@ export async function probeEntry(record, { fetchImpl = fetch } = {}) {
   return {
     name,
     description: entry.description,
-    workbenchId: manifest.id,
     version: distribution.version,
     distribution,
     screenshots,

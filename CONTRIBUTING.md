@@ -4,7 +4,7 @@
 
 1. 按目标 Desktop 的真实工作台接口开发，在本机安装、打开并验证。源码、许可证、图片、使用说明和安装包保留在自己的公开仓库。
 2. 复制 [example](examples/workbench.yml)，填写仓库、展示名称、分类、中英文介绍与截图 HTTPS 地址，保存为 `data/workbenches/<owner>__<repo>.yml`。
-3. 无需手填 ID、版本、commit、npm 包名或校验值。目录使用 GitHub 仓库身份，自动按 **npm → Release → 源码** 选择安装来源。名称填写 name，用于市场列表页展示；有明确的预构建包时可选填 tarball URL，无需填写版本或校验值。双语介绍填写 description.zh 和 description.en，均为非空单行。
+3. 无需手填 ID、版本、commit、npm 包名或校验值，也无需新增 `workbench.json`。目录使用 GitHub 仓库身份，自动从 `package.json` 按 **npm → Release → 源码** 选择并验证安装来源。名称填写 name，用于市场列表页展示；有明确的预构建包时可选填 tarball URL，无需填写版本或校验值。双语介绍填写 description.zh 和 description.en，均为非空单行。
 4. 执行 `npm ci --ignore-scripts && npm run check`。本地检查验证格式、example、测试和离线生成；远程来源与图片由可信 CI 实际检查。
 5. 提交 PR，只新增或修改这一份 YAML；实测环境、安装与卸载步骤、权限、服务费用、授权和已知限制写在 PR 描述及作者 README，不塞进目录协议。
 6. 自动检查通过、维护者完成首次审核、合并并成功发布后，才报告已收录。目录 artifact 不等于 Desktop 已接入在线市场。

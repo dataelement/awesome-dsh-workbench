@@ -42,11 +42,11 @@ screenshots:
 - 名称：作者填写的 `name`，用于市场列表页展示；非空单行字符串，不被仓库名或包名覆盖。
 - 简介由 YAML 的 `description.zh` 和 `description.en` 提供，离线预览和在线目录均保留两种语言，不使用 GitHub About 或 manifest 覆盖。
 - 仓库身份、作者归属和许可证：GitHub 仓库元数据。
-- 包名、版本、运行时 ID、兼容性、安装地址和校验值：源码与选中发布包。
+- 包名、版本、安装地址和校验值：源码与选中发布包的 `package.json`。
 
 这些信息随定期探测刷新。修改 GitHub About、发布新包或更新原路径图片都不需要目录 PR。名称、分类、双语介绍和截图顺序属于市场编排，无法可靠地从 repo 元数据获取，因此保留在 YAML。
 
-源码默认分支可能比正式 npm/Release 版本更新，因此不要求二者版本相同。包自身的 manifest/package 版本必须一致，工作台 ID 应保持稳定并与源码声明一致。目录唯一键是仓库；运行时 ID 是从包读取的宿主标识，宿主安装时仍需处理运行时 ID 冲突。
+源码默认分支可能比正式 npm/Release 版本更新，因此不要求二者版本相同。目录唯一键是仓库；运行时工作台 ID 由插件加载后向宿主注册，不作为安装前目录字段。宿主仍需处理运行时 ID 冲突。
 
 ## 截图标准
 
@@ -63,7 +63,9 @@ screenshots:
 
 ## 包与宿主
 
-v1 只支持仓库根目录的一个工作台，暂不支持 monorepo 子目录。实际包需满足宿主格式：manifest v1、版本一致、安全入口、`dsh.bundle.patch` 及客户端注入。包不超过 8 MiB，解包不执行代码，拒绝越界和链接，限制解压体积与文件数。源码安装要求入口已存在，目录构建不替作者编译。
+当前只支持仓库根目录的一个工作台，暂不支持 monorepo 子目录。源码根目录及最终选中的 npm/Release 包都以 `package.json` 为安装事实源：必须包含完整 SemVer 版本、指回条目仓库的 `repository`、安全的 `dsh.bundle.patch`、注入 `dsh-desktop-workbenches` 的客户端声明，以及安全且真实存在的 `exports["./client"]`。无需额外维护 `workbench.json`；展示名称和双语简介来自目录 YAML，运行时 ID、布局和行为由插件加载后注册。
+
+包不超过 8 MiB，解包不执行代码，拒绝越界和链接，并限制解压体积与文件数。源码安装要求 bundle patch 与客户端入口已经存在，目录构建不替作者编译。能力和权限字符串不作为可信安全声明；需要权限控制时应由宿主提供并执行真实授权协议。
 
 校验器的宿主格式依据固定于 Desktop commit `9d04845dfe6b66f9df3a5e0b401b9a8e1f1d45f9` 的[包校验脚本](https://github.com/dataelement/dsh-desktop/blob/9d04845dfe6b66f9df3a5e0b401b9a8e1f1d45f9/scripts/check-workbench-package.mjs)；开发方式可参考该版本的[作者指南](https://github.com/dataelement/dsh-desktop/blob/9d04845dfe6b66f9df3a5e0b401b9a8e1f1d45f9/packages/dsh-desktop-workbenches/development-guide.zh.md)。此依据不代表所有 Desktop 发布版本兼容，投稿仍需记录实际验证的宿主版本；目录消费者接入和安装需独立验收。
 
@@ -74,7 +76,7 @@ v1 只支持仓库根目录的一个工作台，暂不支持 monorepo 子目录�
 `data/index.json` 不提交；GitHub Actions 将整个 `data/` 目录上传为 Pages artifact，因此发布后索引位于站点根路径 `/index.json`。全部探测通过后才替换 Pages 部署。首次收录经过人工审核，后续发版由作者负责并自动探测；这不意味着每个后续版本经过人工审核或安全审计。
 
 
-正式 JSON 由 [catalog.schema.json](../schema/catalog.schema.json)校验，版本为 `schemaVersion: 1`：
+正式 JSON 由 [catalog.schema.json](../schema/catalog.schema.json)校验，版本为 `schemaVersion: 2`。版本 2 删除无法从安装结果可靠验证的 `workbenchId` 和自声明兼容范围；客户端使用仓库身份展示目录，安装后再读取宿主实际注册的运行时 ID：
 
 | 安装类型 `distribution.type` | 消费者必须读取的目标 |
 | --- | --- |
@@ -82,6 +84,6 @@ v1 只支持仓库根目录的一个工作台，暂不支持 monorepo 子目录�
 | `github-release` | 固定 `url`、`version`、`sha256` |
 | `github-source` | 仓库 `url` 与完整 `commit` |
 
-三种类型都包含实际版本与兼容范围；消费者按 type 分支处理，不能从描述或命令字符串反推安装目标，不能遇到损坏包后悄悄换来源。顶层条目版本必须与选中安装版本一致，仓库身份、源码 commit 和截图所属仓库有跨字段校验。未知字段及非成功探测结果不能进入正式输出。候选探测阶段和正式发布前都执行同一输出校验。
+三种类型都包含实际版本；消费者按 type 分支处理，不能从描述或命令字符串反推安装目标，不能遇到损坏包后悄悄换来源。顶层条目版本必须与选中安装版本一致，仓库身份、源码 commit 和截图所属仓库有跨字段校验。未知字段及非成功探测结果不能进入正式输出。候选探测阶段和正式发布前都执行同一输出校验。
 
 投稿和客户端索引是两个契约，前者不携带版本字段；后者变更不兼容结构时必须升级 schemaVersion，并说明消费者迁移。
