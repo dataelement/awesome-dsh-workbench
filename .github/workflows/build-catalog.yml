@@ -1,0 +1,33 @@
+name: Build catalog artifact
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run validate
+      - run: npm test
+      - name: Probe remote sources and build catalog
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: npm run probe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: workbench-catalog
+          path: dist/catalog.json
+          if-no-files-found: error

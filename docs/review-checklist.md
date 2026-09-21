@@ -7,6 +7,9 @@
 - [ ] 文件名和 `url` 指向同一个 GitHub owner/repo。
 - [ ] 分类存在，生成的 `dist/catalog.json` 没有差异。
 - [ ] 如填写 Release，地址属于同一仓库、文件为 `.tgz`，并填写 SHA-256。
+- [ ] 受信任探测确认仓库公开、未归档、有许可证，且真实 `workbench.json` 有效。
+- [ ] `workbenchId` 在整个目录中唯一；npm 包（如发现）双向指向同一 GitHub 仓库。
+- [ ] Release 包（如有）通过大小、路径、校验值及包内清单检查，全程没有执行包内代码。
 
 ## 人工检查
 
