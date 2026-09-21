@@ -1,43 +1,37 @@
 # Awesome DSH Workbench
 
-DSH Desktop 工作台市场的目录与投稿准备仓库。工作台是面向具体工作场景、组织界面与 Agent 能力的插件。
+DSH Desktop 工作台市场的公开目录。作者保管自己的源码和发布包；本仓库只保存一份简短的仓库索引，并生成给客户端读取的 `dist/catalog.json`。
 
-**当前状态：准备稿。** 本仓库尚未接入在线市场或审核服务，目前没有已收录工作台。提交材料格式也不是正式 SDK 或机器可读协议。
+## 目录怎样工作
 
-## 仓库负责什么
+- 一个源码仓库对应 `data/workbenches/<owner>__<repo>.yml`。
+- 第一次上架或修改展示信息，通过 GitHub Pull Request 提交这个 YAML。
+- 作者以后发布新版本，无需为每个版本改目录文件。后续版本探测属于下一阶段，不在本仓库联网执行。
+- 本仓库不复制和托管作者的安装包。
 
-本仓库维护工作台的发现信息、投稿材料和验收记录。作者的业务源码保留在自己的仓库，投稿时提供源码地址和完整、不可变的 commit SHA，便于审核及追溯。
+当前安装来源按 DSH Market 的思路保留仓库地址。作者可以额外写明一个不可变的 GitHub Release `.tgz` 地址和 SHA-256；没有填写时，生成目录会标记为 GitHub 源码来源。联网构建会按安全规则发现 npm 包和版本。
 
-## 产品规范
+受信任构建会联网确认仓库公开、未归档且有可识别许可证，并读取真实的 `workbench.json`。只有仓库根 `package.json` 明确给出包名、且 npm 元数据反向指向同一个 GitHub 仓库时才采用 npm；系统不会根据仓库名猜包名。固定 Release 包会在大小限制内解包读取清单，不执行其中代码。
 
-权威的产品规范是 **DSH Desktop 工作台开发指南**，发布在 <https://dshdesktop.com/workbench/skills/workbench-development/SKILL.md>，也随应用分发。本仓库的投稿材料格式和验收要点与该规范对齐，规范不移动、提交材料应随之调整。
+## 投稿
 
-## 流程
+阅读 [投稿指南](CONTRIBUTING.md)，复制 [YAML 示例](examples/workbench.yml)，每次只提交一个 `data/workbenches/owner__repo.yml`。`dist/catalog.json` 由 CI 生成，投稿者不要修改或提交。合并代表进入公开目录，不代表 DSH 团队接管工作台源码或后续维护。
 
-工作台作者在 DSH Desktop 内点「制作我的工作台」，按三步进行：
+## 本地检查
 
-1. 阅读规范，把开发指令交给自己的 Agent。
-2. Agent 把工作台装到当前设备，用户确认它出现在「我的工作台」和左侧入口，并实际打开。
-3. 想投稿时，再按本页要求准备材料并提交。
+```bash
+npm ci
+npm run check
+```
 
-**本机安装并实际验证是投稿的前提**，不是与投稿并列的另一种选择。
+`npm run check` 会在本机重新生成 `dist/catalog.json` 供检查，但投稿时不要提交它。生成结果按仓库 ID 排序且不含时间戳，相同输入始终得到相同文件。
 
-## 如何参与
+字段说明见 [目录协议](catalog/README.md)，审核标准见 [验收清单](docs/review-checklist.md)。
 
-- 阅读 [投稿指南](CONTRIBUTING.md) 了解流程与材料要求。
-- 阅读 [验收清单](docs/review-checklist.md) 了解审核者会核对什么（提交者也可对照自查）。
-- 按 [投稿材料模板](examples/submission.md) 准备说明；材料保存为 `submissions/<工作台标识>/<版本>.md`（如 `submissions/dsh-site-selection/1.2.0.md`）。
-- 通过 Pull Request 提交；每个新版本都需要维护者验收，通过后才能收录到 [目录](catalog/README.md)。
+## 自动化边界
 
-个人创建的工作台可以先在本地使用，不等于已获市场收录。
+- 投稿 PR 的普通工作流不检出也不执行贡献者代码。
+- `workflow_run` 门禁始终检出 `main` 上的受信任脚本，只通过 GitHub API 读取 PR 中唯一的候选 YAML。远程服务限流或临时不可用会标为“探测未完成”，内容或安全检查失败会使门禁失败。
+- `main` 分支构建会执行完整探测并上传 `dist/catalog.json` 为 Actions artifact。目前没有发布或部署步骤。
 
-## 开发优先级
-
-1. 第一期：在 DSH Desktop 本地实现工作台市场入口，以及工作台固定界面的逻辑。
-2. 第二期：实现 GitHub 提交审核，以及工作台内容提交审核。
-
-本仓库只做市场投稿准备，不代表上述功能已经实现。产品内提交计划要求填写并校验邮箱，校验方式及服务尚未实现；公开 GitHub 投稿无需提供个人邮箱。
-
-## 尚待确定
-
-宿主扩展接口、正式目录协议、审核服务和在线市场发布机制仍需与 DSH Desktop 实现对齐。材料中应明确真实依赖及限制，不以此准备稿宣称任意宿主版本兼容。
+`workflow_run` 门禁必须先随本实现合并到 `main` 才会生效；本次引导 PR 本身不能依靠尚未存在于 `main` 的门禁。

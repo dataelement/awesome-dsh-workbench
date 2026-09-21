@@ -1,0 +1,9 @@
+# 测试夹具，不会进入公开目录。
+url: https://github.com/owner/repo
+name: 示例工作台
+category: productivity
+description:
+  zh: 用来验证目录工具的示例工作台，不代表市场已收录。
+release:
+  url: https://github.com/owner/repo/releases/download/v1.0.0/workbench.tgz
+  sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa

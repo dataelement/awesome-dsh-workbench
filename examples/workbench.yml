@@ -1,0 +1,10 @@
+# 仅作填写示例，不会被构建脚本收录。
+url: https://github.com/owner/repo
+name: 示例工作台
+category: productivity
+description:
+  zh: 请用一句平实的话说明这个工作台帮助用户完成什么工作。
+# 如果没有固定的 GitHub Release 安装包，请删除下面四行。
+release:
+  url: https://github.com/owner/repo/releases/download/v1.0.0/workbench.tgz
+  sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
