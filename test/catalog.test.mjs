@@ -7,102 +7,63 @@ import { createValidator, generateCatalog, readEntry, ROOT } from '../scripts/ca
 
 const fixture = path.join(ROOT, 'test/fixtures/valid/owner__repo.yml')
 
-test('accepts the documented YAML and derives generated fields', async () => {
+test('minimal example is the production protocol, with no duplicated runtime or review fields', async () => {
   const record = await readEntry(fixture, await createValidator())
-  const catalog = generateCatalog([record], [{ id: 'productivity', name: { zh: '效率' } }])
-  const item = catalog.workbenches[0]
-  assert.equal(item.id, 'owner/repo')
-  assert.equal(item.workbenchId, 'sample-workbench')
-  assert.equal(item.sourceCommit, 'a'.repeat(40))
-  assert.equal(item.version, '1.2.3')
-  assert.equal(item.screenshots[0].url, `https://raw.githubusercontent.com/owner/repo/${'a'.repeat(40)}/docs/images/overview.webp`)
-  assert.equal(item.distribution.type, 'github-release')
-  assert.equal(item.distribution.sha256, 'a'.repeat(64))
+  const example = await readEntry(path.join(ROOT, 'examples/workbench.yml'), await createValidator(), { example: true })
+  assert.deepEqual(record, example)
+  assert.deepEqual(Object.keys(record.entry), ['url', 'name', 'category', 'description', 'screenshots'])
+  const catalog = generateCatalog([record], [])
+  assert.equal(catalog.workbenches[0].id, 'owner/repo')
+  assert.equal(catalog.workbenches[0].distribution, undefined) // Only a successful probe chooses an install target.
 })
 
-test('keeps the agreed seven categories', async () => {
-  const categories = JSON.parse(await fs.readFile(path.join(ROOT, 'data/categories.json'), 'utf8'))
-  assert.deepEqual(categories.map(({ id }) => id), [
-    'development',
-    'productivity',
-    'content',
-    'data',
-    'research',
-    'operations',
-    'other'
-  ])
-})
-
-test('rejects unknown author fields', async () => {
+test('rejects redundant author fields', async () => {
   const validate = await createValidator()
   const { entry } = await readEntry(fixture, validate)
-  assert.equal(validate({ ...entry, id: 'not-author-settable' }), false)
-  assert.ok(validate.errors.some((error) => error.keyword === 'additionalProperties'))
+  for (const key of ['id', 'workbenchId', 'schemaVersion', 'version', 'source', 'author', 'verification', 'requirements', 'npm']) {
+    assert.equal(validate({ ...entry, [key]: 'not-author-settable' }), false, key)
+  }
 })
 
-test('rejects a filename that does not match the repository', async () => {
+test('filename must match the repository', async (t) => {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'dsh-catalog-'))
-  const wrongFile = path.join(directory, 'someone__else.yml')
-  await fs.copyFile(fixture, wrongFile)
+  t.after(() => fs.rm(directory, { recursive: true, force: true }))
+  const file = path.join(directory, 'someone__else.yml')
+  await fs.copyFile(fixture, file)
   const validate = await createValidator()
-  await assert.rejects(() => readEntry(wrongFile, validate), /文件名应为 owner__repo.yml/)
+  await assert.rejects(() => readEntry(file, validate), /文件名/)
 })
 
-test('rejects a release asset from another repository', async () => {
-  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'dsh-catalog-'))
-  const file = path.join(directory, 'owner__repo.yml')
-  const contents = (await fs.readFile(fixture, 'utf8')).replace(
-    'github.com/owner/repo/releases',
-    'github.com/another/repo/releases'
-  )
-  await fs.writeFile(file, contents)
-  const validate = await createValidator()
-  await assert.rejects(() => readEntry(file, validate), /必须属于同一个 GitHub 仓库/)
-})
-
-test('rejects a movable latest release URL', async () => {
-  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'dsh-catalog-'))
-  const file = path.join(directory, 'owner__repo.yml')
-  const contents = (await fs.readFile(fixture, 'utf8')).replace('/download/v1.2.3/', '/download/latest/')
-  await fs.writeFile(file, contents)
-  const validate = await createValidator()
-  await assert.rejects(() => readEntry(file, validate), /不能使用 latest/)
-})
-
-test('catalog generation is stable regardless of input order', () => {
-  const make = (owner) => ({
-    owner,
-    repository: 'repo',
-    entry: {
-      source: { commit: 'a'.repeat(40) },
-      screenshots: [],
-      url: `https://github.com/${owner}/repo`,
-      name: owner,
-      category: 'other',
-      description: { zh: `${owner} 的工作台描述内容足够长。` }
-    }
-  })
-  const categories = [{ id: 'other', name: { zh: '其他' } }]
-  assert.deepEqual(generateCatalog([make('zeta'), make('alpha')], categories), generateCatalog([make('alpha'), make('zeta')], categories))
-})
-
-test('example is validated using the production schema', async () => {
-  const record = await readEntry(path.join(ROOT, 'examples/workbench.yml'), await createValidator(), { example: true })
-  assert.equal(record.entry.workbenchId, 'sample-workbench')
-})
-
-test('rejects unsafe or duplicate screenshot paths and movable commits', async () => {
+test('accepts fixed or latest Release links but rejects a different repository', async (t) => {
   const validate = await createValidator()
   const { entry } = await readEntry(fixture, validate)
-  for (const commit of ['main', 'v1.2.3', 'abc123']) assert.equal(validate({ ...entry, source: { commit } }), false)
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'dsh-release-'))
+  t.after(() => fs.rm(directory, { recursive: true, force: true }))
+  const file = path.join(directory, 'owner__repo.yml')
+  for (const suffix of ['download/v1.2.3/workbench.tgz', 'latest/download/workbench.tgz']) {
+    await fs.writeFile(file, JSON.stringify({ ...entry, release: `https://github.com/owner/repo/releases/${suffix}` }))
+    await readEntry(file, validate)
+  }
+  await fs.writeFile(file, JSON.stringify({ ...entry, release: 'https://github.com/other/repo/releases/download/v1.2.3/workbench.tgz' }))
+  await assert.rejects(() => readEntry(file, validate), /同一个/)
+})
+
+test('rejects unsafe, duplicate and oversized screenshot lists', async (t) => {
+  const validate = await createValidator()
+  const { entry } = await readEntry(fixture, validate)
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'dsh-paths-'))
-  try {
-    const file = path.join(directory, 'owner__repo.yml')
-    for (const imagePath of ['../x.png', '/x.png', 'C:/x.png', 'a\\b.png', 'https://example.com/x.png', '%2e%2e/x.png']) {
-      await fs.writeFile(file, JSON.stringify({ ...entry, screenshots: [{ path: imagePath, alt: 'test' }] }))
-      await assert.rejects(() => readEntry(file, validate), /安全/)
-    }
-    await fs.writeFile(file, JSON.stringify({ ...entry, screenshots: [{ path: 'a.png', alt: 'a' }, { path: 'a.png', alt: 'b' }] }))
-    await assert.rejects(() => readEntry(file, validate), /重复/)
-  } finally { await fs.rm(directory, { recursive: true, force: true }) }
+  t.after(() => fs.rm(directory, { recursive: true, force: true }))
+  const file = path.join(directory, 'owner__repo.yml')
+  for (const imagePath of ['../x.png', '/x.png', 'C:/x.png', 'a\\b.png', 'https://example.com/x.png', '%2e%2e/x.png']) {
+    await fs.writeFile(file, JSON.stringify({ ...entry, screenshots: [imagePath] }))
+    await assert.rejects(() => readEntry(file, validate), /安全/)
+  }
+  for (const screenshots of [[], ['a.png', 'a.png'], Array.from({ length: 6 }, (_, i) => `${i}.png`)]) assert.equal(validate({ ...entry, screenshots }), false)
+})
+
+test('catalog uniqueness key derives from GitHub owner/repository, sorted deterministically', async () => {
+  const { entry } = await readEntry(fixture, await createValidator())
+  const make = (owner) => ({ owner, repository: 'Repo', entry: { ...entry, url: `https://github.com/${owner}/Repo` } })
+  assert.equal(generateCatalog([make('Owner')], []).workbenches[0].id, 'owner/repo')
+  assert.deepEqual(generateCatalog([make('zeta'), make('alpha')], []), generateCatalog([make('alpha'), make('zeta')], []))
 })

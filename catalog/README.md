@@ -1,52 +1,60 @@
-# 目录协议 v1
+# 工作台目录协议
 
-源文件为 `data/workbenches/<owner>__<repo>.yml`，严格使用 [Schema](../schema/workbench.schema.json)。[完整示例](../examples/workbench.yml)使用虚构来源和验证记录，只能作为结构模板，不能直接投稿；CI 使用正式校验器验证示例。
+一个 GitHub 仓库对应一个工作台条目，文件名为 `data/workbenches/<owner>__<repo>.yml`。仓库地址就是目录身份，不另外申请 ID；重命名或转移后应更新到当前主页，旧重定向地址不能重复收录。
 
-## 作者字段
+## 作者只填写展示信息
+
+```yaml
+url: https://github.com/owner/repo
+name: 示例工作台
+category: productivity
+description: 帮助整理项目资料、跟进任务并生成工作报告。
+screenshots:
+  - docs/images/overview.webp
+  - docs/images/result.png
+# 可选：没有可用 npm 包时采用此 Release。
+# release: https://github.com/owner/repo/releases/latest/download/workbench.tgz
+```
 
 | 字段 | 要求 |
 | --- | --- |
-| `schemaVersion` | 固定为 1；这是目录协议版本，不是宿主 SDK 版本 |
-| `url` | GitHub 仓库主页，必须与文件名一致；v1 仅支持根目录 |
-| `workbenchId` | 与固定源码中的工作台 ID 一致，全目录唯一 |
-| `name` / `author` | 展示名称与作者/团队名称，不要求个人邮箱 |
-| `version` | 完整 SemVer，与固定源码的 manifest 和 package.json 一致 |
+| `url` | GitHub 仓库主页，与文件名一致 |
+| `name` | 展示名称，1–60 字符 |
 | `category` | [七个分类](../data/categories.json)之一 |
-| `description.zh` | 10–200 字符，真实功能说明，不含夸大宣传 |
-| `source.commit` | 40 位小写 commit SHA，不接受分支、短 SHA 或 tag |
-| `screenshots` | 1–5 个 `{path, alt}`，有序，第一张作为封面 |
-| `verification.desktopVersion` | 实测 Desktop 完整 SemVer，不能填预计支持范围 |
-| `verification.platforms` | 实测系统与架构的列表 |
-| `verification.steps` / `results` / `limitations` | 可复现步骤、实际结果和未验证项；无已知限制也需明确写出 |
-| `requirements.permissions` / `services` | 文件、网络、工具等权限与外部服务；不需要时填空数组 |
-| `requirements.setup` / `cost` | 安装、初始化、卸载说明，以及外部服务费用/限制 |
-| `release.url` / `release.sha256` | 可选；同仓库固定 Release 的 `.tgz` 与 64 位小写 SHA-256，必须同时提供 |
+| `description` | 一句话中文介绍，10–200 字符 |
+| `screenshots` | 1–5 个仓库内图片路径，第一张为封面 |
+| `release` | 可选，同仓库 `.tgz` Release 链接，支持固定 tag 或 `latest/download/固定文件名` |
 
-未知字段被拒绝。作者不能填写派生的仓库标识、探测状态、npm 映射或审核结论。完整 YAML 不超过 32 KiB。
+[完整 example](../examples/workbench.yml)直接使用正式 [Schema](../schema/workbench.schema.json)校验。不要填作者 ID、版本、源码 commit、npm 包名、校验值、验证记录或权限表。这些分别来自 GitHub、工作台包、自动探测及 PR 审核材料。输入 YAML 没有独立 `schemaVersion`，输出目录保留机器协议版本。
 
-## 截图与封面
+## 安装来源：npm → Release → 源码
 
-市场图片声明只读取 YAML，不从 `workbench.json`、`screenshots.json` 或 README 自动补充。工作台包可保留宿主自己使用的图片字段，两者用途不同。
+1. **npm**：从源码 `package.json.name` 发现包名。源码与 npm 最新发布版本的 `repository` 都指回该 GitHub 仓库才采用；下载包，校验 registry 的 SHA-512 integrity、包名、版本、工作台 ID 和可安装文件。输出精确版本、固定下载地址及 SHA-256，客户端不能重新解析 latest。
+2. **Release**：无可用 npm 映射时，采用 YAML 中的 `release`。`latest/download` 先通过 GitHub API 解析为固定 tag 的同名资源，再下载、检查包并生成 SHA-256；安装版本读取实际包。未填写就继续使用源码，不猜测多个 Release 资源中哪个可安装。
+3. **源码**：无 npm 映射且未声明 Release 时，解析默认分支为完整 commit，检查实际入口与 bundle patch，输出固定 commit。客户端使用这次解析结果，不重新解析分支。
 
-- 图片放作者仓库，`path` 相对于 `source.commit` 的仓库根目录。源码与图片共用一个固定 commit。
-- 1–5 张 PNG/JPEG/WebP，每张不超过 **2 MiB（2 × 1024 × 1024 bytes）**；必须是可完整解码的静态图片，总像素不超过 16 MiPixels。
-- 路径不得包含绝对路径、反斜线、`..`、URL、查询参数或编码逃逸；同一图片不能重复列出。
-- `alt` 必填，1–300 字符。数组第一张为封面，其余按顺序展示。
-- 建议横向 16:9、宽度至少 1280px；尺寸比例不是硬门槛，展示端应等比适配，不能擅自裁掉关键内容。
-- 使用真实工作台界面，避免个人信息、凭据、客户数据；素材必须有使用权。内容真实性和授权由人工审核。
+只有“未发布 npm 包 / npm 归属不符 / 没有声明 Release”才进入下一层。限流、超时、已选安装包损坏或配置的 Release 失效会阻止本次发布，不能悄悄换来源掩盖故障。
 
-CI 下载图片并校验实际格式、扩展名、字节数、像素数和完整解码；输出固定 commit URL、尺寸、大小及 SHA-256。图片修改需更新 commit 并重新审核。
+源码默认分支可能比正式 npm/Release 版本更新，因此不要求二者版本相同。包自身的 manifest/package 版本必须一致，工作台 ID 应保持稳定并与源码声明一致。目录唯一键是仓库；运行时 ID 是从包读取的宿主标识，宿主安装时仍需处理运行时 ID 冲突。
 
-## 源码与安装包
+## 截图标准
 
-固定源码必须包含 `workbench.json`、`package.json`、安全的入口路径、`dsh.bundle.patch` 指向的文件，并声明客户端注入 `dsh-desktop-workbenches`。这些要求来自[宿主开发中实现](../docs/host-contract.md)，不代表所有已发布 Desktop 都支持。
+- 截图声明仅在 YAML，不从 README、`screenshots.json` 或 manifest 补充。
+- 图片放作者仓库，使用相对路径；每次构建解析默认分支 commit 后，图片 URL 固定到该 commit。
+- 1–5 张静态 PNG/JPEG/WebP；单张不超过 2 MiB，总像素不超过 16 MiPixels。校验真实格式、扩展名、完整解码与大小。
+- 不允许绝对路径、`..`、反斜线、外部 URL、编码逃逸或重复路径。
+- 第一张为封面，按列表顺序显示，辅助文本由工作台名称和图片序号生成。
+- 建议横向 16:9、宽度至少 1280px；比例不是硬门槛，展示端等比适配。
+- 必须是真实产品画面，拥有素材使用权，不含凭据、个人信息或客户数据。图片应与用户可安装的版本相符，由作者维护、人工抽查。
 
-未提供 Release 时，目录输出固定源码 commit；v1 要求源码入口文件可直接读取，不代替作者执行构建。若构建产物不在源码中，应提供 Release 包，CI 检查包内入口。Release 包压缩后不超过 **8 MiB**，SHA-256 必须一致；解包不执行代码，拒绝符号链接和越界路径，限制解压体积、文件数，核对 ID/版本、包内入口与 bundle patch。
+修改图片内容或发布版本无需目录 PR；修改图片路径、顺序、名称、分类、简介、仓库或固定 Release 链接时更新 YAML。
 
-包与源码 ID/版本一致并不证明可重复构建或逐字节等价。维护者仍需检查发布来源及构建流程。npm 信息只是辅助映射，不构成已验证的 npm 安装包。
+## 包与宿主
 
-## 生成与协议迁移
+v1 只支持仓库根目录的一个工作台，暂不支持 monorepo 子目录。实际包需满足[宿主契约](../docs/host-contract.md)：manifest v1、版本一致、安全入口、`dsh.bundle.patch` 及客户端注入。包不超过 8 MiB，解包不执行代码，拒绝越界和链接，限制解压体积与文件数。源码安装要求入口已存在，目录构建不替作者编译。
 
-`npm run generate` 只生成离线预览。`npm run probe` 执行完整联网校验，全部通过后生成发布候选；任一失败不覆盖线上目录。`dist/` 不提交，CI artifact 包含目录和校验清单。
+## 生成产物
 
-目录自身的 `schemaVersion` 与条目输入版本分别维护。破坏性变更必须同步 Schema、example、生成器、消费者契约和迁移说明，并在 PR 中明确；现有旧草稿尚未正式发布，本次迁移要求补齐新增字段，不推断实测结果。
+`npm run generate` 生成离线展示预览，不声明安装来源已验证。`npm run probe` 解析安装优先级并校验，输出 `distribution`、实际版本、源码 commit、运行时 ID、图片 URL/校验值及探测状态。不要把这些生成字段抄回 YAML。
+
+`dist/` 不提交；全部探测通过后才生成发布候选。首次收录经过人工审核，后续发版由作者负责并自动探测；这不意味着每个后续版本经过人工审核或安全审计。

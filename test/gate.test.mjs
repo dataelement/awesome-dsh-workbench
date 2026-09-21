@@ -55,18 +55,6 @@ test('mixed and malformed submissions receive explicit failure on original head'
   }
 })
 
-test('duplicate IDs fail before any remote plugin probe', async () => {
-  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'gate-catalog-'))
-  try {
-    const source = await fs.readFile(path.join(ROOT, 'test/fixtures/valid/owner__repo.yml'), 'utf8')
-    await fs.writeFile(path.join(directory, 'other__repo.yml'), source.replaceAll('github.com/owner/repo', 'github.com/other/repo'))
-    const mock = apiMock({ files: [{ filename: 'data/workbenches/owner__repo.yml', status: 'added' }], source })
-    assert.equal((await runGate({ env, ...mock, dataDir: directory })).failed, true)
-    assert.match(mock.reports.at(-1).output.summary, /ID 重复/)
-    assert.ok(!mock.calls.some((url) => url === 'https://api.github.com/repos/owner/repo'))
-  } finally { await fs.rm(directory, { recursive: true, force: true }) }
-})
-
 test('network incomplete is blocking failure, never neutral', async () => {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'gate-empty-'))
   try {

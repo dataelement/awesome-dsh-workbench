@@ -19,9 +19,9 @@
 | Catalog CI | 所有 PR 和 main push：离线 Schema/example、测试、确定性生成、投稿范围 |
 | Catalog candidate → Trusted catalog PR gate | PR 触发无密钥排队，可信 main 脚本通过 API 读取固定 head；旧 head 不为新提交写成功结果，fork PR 不依赖可能为空的 event.pull_requests |
 | Build catalog artifact | main push / 手动：完整探测，生成 artifact；启用发布变量后部署 Pages |
-| 同一构建的每日 schedule | 检查固定来源、安装包和截图，只产出结果/artifact，不自动升级作者版本或覆盖线上目录 |
+| 同一构建的每日 schedule | 重新解析 npm → Release → 源码并检查截图，全部成功后产出 artifact；启用发布后自动刷新目录 |
 
-维护者订阅该仓库 Actions 失败通知。定期巡检的失败在运行记录中可见；目前不自动给作者发消息，也不自动下架。处理时区分网络/限流与确定性失效，确认后通过 PR 修复或下架。
+维护者订阅该仓库 Actions 失败通知。定期更新的失败在运行记录中可见；目前不自动给作者发消息，也不自动下架。处理时区分网络/限流与确定性失效，确认后通过 PR 修复或下架。
 
 构建只有全部探测成功才输出新的完整目录；失败会保持上次 Pages 部署。部署使用一个 Pages artifact，三份文件一起切换。并发发布串行执行，定时探测不会取消进行中的发布。
 
@@ -29,7 +29,7 @@
 
 - PR 网络限流：可信检查标为失败并说明未完成，重跑 Catalog candidate，不能以 neutral 当作通过。
 - 构建失败：查日志，修复原因后重跑；不要手工编辑生成 JSON。
-- 回滚：手动运行 Build catalog artifact，将 `source_commit` 填为已合入 main 的完整历史 commit，重建并探测该目录后部署。流程拒绝非 main 祖先。历史 commit 必须含本版构建工具；若旧来源失效，重建会停止并保留当前线上版本，不承诺可以脱离来源恢复历史字节。
+- 回滚：手动运行 Build catalog artifact，将 `source_commit` 填为已合入 main 的完整历史 commit，重建并探测该目录信息后部署。流程拒绝非 main 祖先。这是目录信息回退：npm latest、Release latest 和默认分支仍按当前状态解析，不是安装版本回滚。历史 commit 必须含本版构建工具；若旧来源失效，重建会停止并保留当前线上版本，不承诺可以脱离来源恢复历史字节。
 - 回滚后若要持续保留该版本，需在 main 提交对应回退 PR，否则下一次 main 发布会恢复当前源数据。
 - `publication.json.sourceCommit` 是目录仓库 revision；每个条目的 `sourceCommit` 是作者源码 revision，两者不能混淆。
 

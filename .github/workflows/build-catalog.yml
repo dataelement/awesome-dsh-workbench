@@ -42,7 +42,7 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm run check
-      - name: Probe fixed sources and build complete catalog
+      - name: Resolve installation sources and build complete catalog
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
@@ -56,9 +56,8 @@ jobs:
       - id: mode
         env:
           ENABLED: ${{ vars.PUBLISH_CATALOG }}
-          EVENT: ${{ github.event_name }}
         run: |
-          if [ "$ENABLED" = true ] && [ "$EVENT" != schedule ]; then
+          if [ "$ENABLED" = true ]; then
             echo 'publish=true' >> "$GITHUB_OUTPUT"
           fi
       - uses: actions/upload-pages-artifact@v3

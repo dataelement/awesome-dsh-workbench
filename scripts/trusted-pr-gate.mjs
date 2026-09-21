@@ -63,7 +63,7 @@ export async function runGate({ env = process.env, fetchImpl = fetch, dataDir = 
       }) })
       const fresh = await api(`/pulls/${pull.number}`)
       if (fresh.head.sha !== sha) throw new Error('PR 已更新，请等待最新提交的检查')
-      await report('success', '固定源码、截图、安装来源和目录唯一性检查通过；仍需维护者核对实测记录及版本来源。')
+      await report('success', '仓库、截图和三级安装来源检查通过；仍需维护者核对 PR 实测记录。')
     } catch (error) {
       const incomplete = error instanceof ProbeError && error.incomplete
       await report('failure', `${incomplete ? '探测暂未完成，请重跑；不能视为通过。' : '校验失败。'}\n${error.message}`)

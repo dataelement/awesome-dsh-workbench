@@ -1,32 +1,9 @@
-# 结构示例；仓库、commit、校验值和实测记录均为占位，不能直接投稿。
-schemaVersion: 1
+# 结构示例；替换仓库、说明和图片路径后投稿。
 url: https://github.com/owner/repo
-workbenchId: sample-workbench
 name: 示例工作台
-author: owner
-version: 1.2.3
 category: productivity
-description:
-  zh: 用来验证目录工具的示例工作台，不代表市场已收录。
-source:
-  commit: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+description: 用来验证目录工具的示例工作台，不代表市场已收录。
 screenshots:
-  - path: docs/images/overview.webp
-    alt: 工作台业务面板与任务列表
-verification:
-  desktopVersion: 0.9.2
-  platforms: [darwin-arm64]
-  steps:
-    - 安装指定版本，打开工作台，创建并恢复工作台会话。
-    - 切换工作台后返回，检查资料和草稿保留；卸载后检查业务文件保留。
-  results: 示例占位；投稿时填写实际结果，不能沿用此文本作为验收证据。
-  limitations: 示例占位；其他平台未验证，宿主工作台接口仍处于开发阶段。
-requirements:
-  permissions: [读取用户选择的工作区文件]
-  services: []
-  setup: 示例占位；填写真实安装、配置和卸载步骤，不填凭据。
-  cost: 示例占位；填写真实服务费用与限制。
-# 可选；若提供，必须是同仓库固定版本的真实包，压缩后不超过 8 MiB。
-release:
-  url: https://github.com/owner/repo/releases/download/v1.2.3/workbench.tgz
-  sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  - docs/images/overview.webp
+# 可选：npm 不可用时使用此包；未填写则回退源码。
+# release: https://github.com/owner/repo/releases/latest/download/workbench.tgz

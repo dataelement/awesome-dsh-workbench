@@ -4,7 +4,6 @@ import { fileURLToPath } from 'node:url'
 import Ajv2020 from 'ajv/dist/2020.js'
 import addFormats from 'ajv-formats'
 import yaml from 'js-yaml'
-import semver from 'semver'
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 export const DATA_DIR = path.join(ROOT, 'data/workbenches')
@@ -59,22 +58,13 @@ export async function readEntry(file, validate, { example = false } = {}) {
   if (!example && path.basename(file).toLowerCase() !== expected) {
     throw new Error(`${relative} 文件名应为 ${owner}__${repository}.yml`)
   }
-  if (semver.valid(entry.version) !== entry.version || semver.valid(entry.verification.desktopVersion) !== entry.verification.desktopVersion) throw new Error(`${relative} 的 version 和 desktopVersion 必须是完整 SemVer`)
-  const images = new Set()
   for (const image of entry.screenshots) {
-    if (!safeRelativePath(image.path) || !/\.(png|jpe?g|webp)$/i.test(image.path)) throw new Error(`${relative} 的截图必须是安全的相对 PNG/JPEG/WebP 路径`)
-    if (images.has(image.path)) throw new Error(`${relative} 的截图路径重复`)
-    images.add(image.path)
+    if (!safeRelativePath(image) || !/\.(png|jpe?g|webp)$/i.test(image)) throw new Error(`${relative} 的截图必须是安全的相对 PNG/JPEG/WebP 路径`)
   }
   if (entry.release) {
-    const release = new URL(entry.release.url)
-    const releasePrefix = `/${owner}/${repository}/releases/download/`.toLowerCase()
-    if (!release.pathname.toLowerCase().startsWith(releasePrefix)) {
-      throw new Error(`${relative} 的 release.url 必须属于同一个 GitHub 仓库`)
-    }
-    const releaseTail = release.pathname.slice(releasePrefix.length)
-    if (releaseTail.toLowerCase().startsWith('latest/')) {
-      throw new Error(`${relative} 的 release.url 必须使用固定版本，不能使用 latest`)
+    const release = new URL(entry.release)
+    if (!release.pathname.toLowerCase().startsWith(`/${owner}/${repository}/releases/`.toLowerCase())) {
+      throw new Error(`${relative} 的 release 必须属于同一个 GitHub 仓库`)
     }
   }
   return { entry, owner, repository }
@@ -87,11 +77,8 @@ export async function loadEntries({ directory = DATA_DIR } = {}) {
   if (invalid.length) throw new Error(`data/workbenches 只允许 owner__repo.yml：${invalid.join(', ')}`)
   const records = []
   for (const name of names) records.push(await readEntry(path.join(directory, name), validate))
-  const workbenchIds = new Set()
   const ids = new Set()
-  for (const { entry, owner, repository } of records) {
-    if (workbenchIds.has(entry.workbenchId)) throw new Error(`工作台 ID 重复：${entry.workbenchId}`)
-    workbenchIds.add(entry.workbenchId)
+  for (const { owner, repository } of records) {
     const id = `${owner}/${repository}`.toLowerCase()
     if (ids.has(id)) throw new Error(`仓库重复：${id}`)
     ids.add(id)
@@ -110,21 +97,9 @@ export function generateCatalog(records, categories) {
         repository,
         url: entry.url.replace(/\/$/, ''),
         name: entry.name,
-        workbenchId: entry.workbenchId,
-        author: entry.author,
-        version: entry.version,
-        sourceCommit: entry.source.commit,
-        verification: entry.verification,
-        requirements: entry.requirements,
-        screenshots: entry.screenshots.map(({ path: imagePath, alt }) => ({
-          url: `https://raw.githubusercontent.com/${owner}/${repository}/${entry.source.commit}/${imagePath.split('/').map(encodeURIComponent).join('/')}`,
-          alt
-        })),
+        screenshots: entry.screenshots,
         category: entry.category,
-        description: entry.description,
-        distribution: entry.release
-          ? { type: 'github-release', url: entry.release.url, sha256: entry.release.sha256 }
-          : { type: 'github-source', url: entry.url.replace(/\/$/, ''), commit: entry.source.commit }
+        description: entry.description
       }))
       .sort((a, b) => a.id.localeCompare(b.id, 'en'))
   }

@@ -18,7 +18,7 @@ export class ProbeError extends Error {
 async function responseJson(response, label) {
   if (response.status === 403 || response.status === 429) throw new ProbeError('rate-limited', `${label} 遇到 GitHub 限流`, { incomplete: true })
   if (!response.ok) throw new ProbeError('unavailable', `${label} 请求失败（HTTP ${response.status}）`, { incomplete: response.status >= 500 })
-  return response.json()
+  return JSON.parse((await readBounded(response, 1024 * 1024, label)).toString())
 }
 
 function sameRepository(value, owner, repository) {
@@ -55,23 +55,27 @@ async function fetchJsonFile(fetchImpl, owner, repository, sha, name, required =
   try { return JSON.parse((await readBounded(response, 256 * 1024, name)).toString()) } catch { throw new ProbeError('invalid-manifest', `${name} 不是有效 JSON`) }
 }
 
-async function inspectRelease(fetchImpl, release, expectedId, expectedVersion) {
-  const response = await fetchImpl(release.url)
+async function inspectPackage(fetchImpl, url, { expectedId, expectedVersion, expectedName, integrity } = {}) {
+  const response = await fetchImpl(url)
   if (!response.ok) throw new ProbeError('release-unavailable', `Release 下载失败（HTTP ${response.status}）`, { incomplete: response.status === 429 || response.status >= 500 })
   let bytes
   try { bytes = await readBounded(response, MAX_PACKAGE_BYTES, 'Release 包（上限 8 MiB）') }
   catch (error) { throw new ProbeError('release-invalid', error.message) }
   const digest = crypto.createHash('sha256').update(bytes).digest('hex')
-  if (digest !== release.sha256) throw new ProbeError('release-mismatch', 'Release 包 SHA-256 与目录声明不一致')
+  if (integrity) {
+    const match = /^sha512-([A-Za-z0-9+/]+={0,2})$/.exec(integrity)
+    if (!match || crypto.createHash('sha512').update(bytes).digest('base64') !== match[1]) throw new ProbeError('package-mismatch', 'npm 包完整性校验失败')
+  }
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'dsh-release-'))
   const archive = path.join(directory, 'package.tgz')
   const unpacked = path.join(directory, 'unpacked')
   await fs.writeFile(archive, bytes)
   await fs.mkdir(unpacked)
   const names = []
+  let packageManifest
   try {
     let expandedBytes = 0
-    await tar.t({ file: archive, onentry: (entry) => {
+    await tar.t({ file: archive, sync: true, onentry: (entry) => {
       names.push(entry.path)
       if (!['File', 'Directory'].includes(entry.type)) throw new Error(`不允许 ${entry.type} 条目`)
       expandedBytes += entry.size || 0
@@ -93,14 +97,54 @@ async function inspectRelease(fetchImpl, release, expectedId, expectedVersion) {
     if (!relative || relative.startsWith('..') || path.isAbsolute(relative) || !(await fs.stat(entry).catch(() => null))?.isFile()) {
       throw new ProbeError('release-invalid', 'Release 包中的 entry 不存在或路径不安全')
     }
-    if (manifest.id !== expectedId || manifest.version !== expectedVersion) throw new ProbeError('release-mismatch', 'Release 包与仓库 manifest 的 id/version 不一致')
+    if (manifest.id !== expectedId || (expectedVersion && manifest.version !== expectedVersion) || (expectedName && pkg.name !== expectedName)) throw new ProbeError('package-mismatch', '安装包 ID/版本/包名与来源不一致')
+    packageManifest = manifest
   } catch (error) {
     if (error instanceof ProbeError) throw error
     throw new ProbeError('release-invalid', `Release 包检查失败：${error.message}`)
   } finally {
     await fs.rm(directory, { recursive: true, force: true })
   }
-  return { sha256: digest, bytes: bytes.length }
+  return { sha256: digest, bytes: bytes.length, version: packageManifest.version, compatibility: packageManifest.compatibility }
+}
+
+async function resolveDistribution(fetchImpl, entry, owner, repository, commit, manifest, pkg) {
+  if (pkg.name && sameRepository(pkg.repository, owner, repository)) {
+    const response = await fetchImpl(`https://registry.npmjs.org/${encodeURIComponent(pkg.name)}/latest`)
+    if (response.status !== 404) {
+      const published = await responseJson(response, 'npm')
+      if (published.name === pkg.name && sameRepository(published.repository, owner, repository)) {
+        const url = new URL(published.dist?.tarball || '')
+        if (url.origin !== 'https://registry.npmjs.org' || url.username || url.password || url.hash) throw new ProbeError('invalid-npm', 'npm 安装包必须来自官方 registry')
+        if (!semver.valid(published.version) || typeof published.dist?.integrity !== 'string') throw new ProbeError('invalid-npm', 'npm 缺少版本或完整性校验值')
+        const checked = await inspectPackage(fetchImpl, url.href, { expectedId: manifest.id, expectedName: pkg.name, expectedVersion: published.version, integrity: published.dist.integrity })
+        return { type: 'npm', name: pkg.name, url: url.href, integrity: published.dist.integrity, ...checked }
+      }
+    }
+  }
+  if (entry.release) {
+    let url = entry.release
+    if (url.includes('/releases/latest/download/')) {
+      const name = decodeURIComponent(new URL(url).pathname.split('/').at(-1))
+      const release = await responseJson(await fetchImpl(`https://api.github.com/repos/${owner}/${repository}/releases/latest`), 'GitHub Release')
+      const asset = release.assets?.find((item) => item.name === name)
+      if (!asset) throw new ProbeError('release-unavailable', '最新 Release 缺少指定安装包')
+      url = asset.browser_download_url
+    }
+    const parsed = new URL(url)
+    if (parsed.origin !== 'https://github.com' || parsed.username || parsed.password || !parsed.pathname.toLowerCase().startsWith(`/${owner}/${repository}/releases/download/`.toLowerCase()) || parsed.search || parsed.hash) throw new ProbeError('release-invalid', 'Release 必须解析为同仓库的固定版本资源')
+    return { type: 'github-release', url, ...await inspectPackage(fetchImpl, url, { expectedId: manifest.id }) }
+  }
+  for (const file of [pkg.dsh.bundle.patch, manifest.entry]) {
+    const response = await fetchImpl(sourceFileUrl(owner, repository, commit, file))
+    if (!response.ok) throw new ProbeError('invalid-manifest', `源码缺少 ${file}`, { incomplete: response.status >= 500 || response.status === 429 })
+    await readBounded(response, MAX_PACKAGE_BYTES, file)
+  }
+  return { type: 'github-source', url: entry.url.replace(/\/$/, ''), commit, version: manifest.version, compatibility: manifest.compatibility }
+}
+
+function sourceFileUrl(owner, repository, commit, file) {
+  return `https://raw.githubusercontent.com/${owner}/${repository}/${commit}/${file.split('/').map(encodeURIComponent).join('/')}`
 }
 
 export async function probeEntry(record, { fetchImpl = fetch } = {}) {
@@ -108,72 +152,44 @@ export async function probeEntry(record, { fetchImpl = fetch } = {}) {
   fetchImpl = (url, options = {}) => originalFetch(url, { ...options, signal: AbortSignal.timeout(30_000) })
   const { entry, owner, repository } = record
   const repo = await responseJson(await fetchImpl(`https://api.github.com/repos/${owner}/${repository}`), '仓库')
+  if (typeof repo.full_name !== 'string' || repo.full_name.toLowerCase() !== `${owner}/${repository}`.toLowerCase()) throw new ProbeError('repository-moved', '请使用 GitHub 当前仓库主页，不能通过旧地址重复收录')
   if (repo.private) throw new ProbeError('unavailable', '仓库不是公开仓库')
   if (repo.archived) throw new ProbeError('archived', '仓库已归档')
   if (!repo.license?.spdx_id || repo.license.spdx_id === 'NOASSERTION') throw new ProbeError('missing-license', '仓库没有可识别的许可证')
-  const commit = await responseJson(await fetchImpl(`https://api.github.com/repos/${owner}/${repository}/commits/${entry.source.commit}`), '固定源码 commit')
-  if (commit.sha !== entry.source.commit) throw new ProbeError('unavailable', 'GitHub 返回的 commit 与投稿固定版本不一致')
+  const commit = await responseJson(await fetchImpl(`https://api.github.com/repos/${owner}/${repository}/commits/${encodeURIComponent(repo.default_branch)}`), '源码 commit')
+  if (!/^[a-f0-9]{40}$/.test(commit.sha || '')) throw new ProbeError('unavailable', '未解析到完整源码 commit')
   const manifest = await fetchJsonFile(fetchImpl, owner, repository, commit.sha, 'workbench.json')
   const pkg = await fetchJsonFile(fetchImpl, owner, repository, commit.sha, 'package.json')
   validateManifest(manifest, pkg)
-  if (manifest.id !== entry.workbenchId || manifest.version !== entry.version) throw new ProbeError('source-mismatch', 'YAML 与固定源码的 workbenchId/version 不一致')
-  const sourceUrl = (file) => `https://raw.githubusercontent.com/${owner}/${repository}/${commit.sha}/${file.split('/').map(encodeURIComponent).join('/')}`
-  for (const file of [pkg.dsh.bundle.patch, ...(entry.release ? [] : [manifest.entry])]) {
-    const response = await fetchImpl(sourceUrl(file))
-    if (!response.ok) throw new ProbeError('invalid-manifest', `固定源码缺少 ${file}`)
-    await readBounded(response, MAX_PACKAGE_BYTES, file)
-  }
+  const distribution = await resolveDistribution(fetchImpl, entry, owner, repository, commit.sha, manifest, pkg)
   const screenshots = []
-  for (const image of entry.screenshots) {
-    if (!safeRelativePath(image.path)) throw new ProbeError('invalid-image', '截图路径不安全')
-    const url = sourceUrl(image.path)
+  for (const [index, image] of entry.screenshots.entries()) {
+    if (!safeRelativePath(image)) throw new ProbeError('invalid-image', '截图路径不安全')
+    const url = sourceFileUrl(owner, repository, commit.sha, image)
     const response = await fetchImpl(url)
-    if (!response.ok) throw new ProbeError('invalid-image', `截图不可读取：${image.path}`, { incomplete: response.status === 429 || response.status >= 500 })
+    if (!response.ok) throw new ProbeError('invalid-image', `截图不可读取：${image}`, { incomplete: response.status === 429 || response.status >= 500 })
     try {
-      const bytes = await readBounded(response, MAX_IMAGE_BYTES, image.path)
-      const dimensions = await inspectImage(bytes, image.path)
-      screenshots.push({ url, alt: image.alt, ...dimensions, sha256: crypto.createHash('sha256').update(bytes).digest('hex') })
-    } catch (error) {
-      throw new ProbeError('invalid-image', `${image.path}: ${error.message}`)
-    }
+      const bytes = await readBounded(response, MAX_IMAGE_BYTES, image)
+      const dimensions = await inspectImage(bytes, image)
+      screenshots.push({ url, alt: `${entry.name} 截图 ${index + 1}`, ...dimensions, sha256: crypto.createHash('sha256').update(bytes).digest('hex') })
+    } catch (error) { throw new ProbeError('invalid-image', `${image}: ${error.message}`) }
   }
-
-  let npmPackage = null
-  if (pkg?.name && sameRepository(pkg.repository, owner, repository)) {
-    const npmResponse = await fetchImpl(`https://registry.npmjs.org/${encodeURIComponent(pkg.name)}`)
-    if (npmResponse.ok) {
-      const npm = await npmResponse.json()
-      const published = npm.versions?.[pkg.version]
-      if (published && sameRepository(npm.repository, owner, repository) && sameRepository(published.repository || npm.repository, owner, repository)) {
-        npmPackage = { name: pkg.name, version: pkg.version }
-      }
-    } else if (npmResponse.status !== 404 && (npmResponse.status === 429 || npmResponse.status >= 500)) {
-      throw new ProbeError('npm-incomplete', 'npm 元数据暂时不可用', { incomplete: true })
-    }
-  }
-  const release = entry.release ? await inspectRelease(fetchImpl, entry.release, manifest.id, manifest.version) : null
   return {
     workbenchId: manifest.id,
-    version: manifest.version,
+    version: distribution.version,
+    distribution,
     screenshots,
     sourceCommit: commit.sha,
     license: repo.license.spdx_id,
-    npmPackage,
-    release,
     probe: { status: 'ok' }
   }
 }
 
 export async function probeAll(records, options = {}) {
   const results = []
-  const ids = new Map()
   for (const record of records) {
     try {
-      const generated = await probeEntry(record, options)
-      const prior = ids.get(generated.workbenchId)
-      if (prior) throw new ProbeError('duplicate-workbench-id', `workbenchId ${generated.workbenchId} 与 ${prior} 重复`)
-      ids.set(generated.workbenchId, `${record.owner}/${record.repository}`)
-      results.push({ record, generated })
+      results.push({ record, generated: await probeEntry(record, options) })
     } catch (error) {
       const failure = error instanceof ProbeError ? error : new ProbeError('probe-error', error.message, { incomplete: true })
       results.push({ record, error: { code: failure.code, message: failure.message, status: failure.incomplete ? 'incomplete' : 'failed' } })
