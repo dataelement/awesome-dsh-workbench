@@ -1,3 +1,4 @@
+import { enrichMetrics } from '../scripts/metrics-lib.mjs'
 import assert from 'node:assert/strict'
 import crypto from 'node:crypto'
 import fs from 'node:fs/promises'
@@ -185,6 +186,15 @@ test('published contract accepts every actual installation variant and rejects d
     const generated = await probeEntry(candidate, mock)
     const catalog = await buildPublishedCatalog([{ record: candidate, generated }], [])
     assert.equal(catalog.kind, 'catalog')
+    await enrichMetrics(catalog, { sleep: async () => {}, warn: () => {}, fetchImpl: async () => { throw new Error('offline') } })
+    await validatePublishedCatalog(catalog)
+    catalog.workbenches[0].metrics.githubStars = { value: 0, checkedAt: '2026-09-21T00:00:00Z', status: 'ok' }
+    catalog.workbenches[0].metrics.npmDownloads30d = { value: 4, checkedAt: '2026-09-21T00:00:00Z', status: 'stale', start: '2026-08-22', end: '2026-09-20' }
+    await validatePublishedCatalog(catalog)
+    const badMetrics = structuredClone(catalog)
+    badMetrics.workbenches[0].metrics.githubStars = { value: -1, checkedAt: null, status: 'ok' }
+    await assert.rejects(() => validatePublishedCatalog(badMetrics), /协议/)
+
     assert.deepEqual(catalog.workbenches[0].description, candidate.entry.description)
     const invalid = structuredClone(catalog)
     invalid.workbenches[0].version = '9.9.9'

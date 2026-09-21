@@ -85,3 +85,24 @@ v1 只支持仓库根目录的一个工作台，暂不支持 monorepo 子目录�
 三种类型都包含实际版本与兼容范围；消费者按 type 分支处理，不能从描述或命令字符串反推安装目标，不能遇到损坏包后悄悄换来源。顶层条目版本必须与选中安装版本一致，仓库身份、源码 commit 和截图所属仓库有跨字段校验。未知字段及非成功探测结果不能进入正式输出。候选探测阶段和正式发布前都执行同一输出校验。
 
 投稿和客户端索引是两个契约，前者不携带版本字段；后者变更不兼容结构时必须升级 schemaVersion，并说明消费者迁移。
+
+## 平台采集的统计（可选扩展）
+
+发布条目新增可选 `metrics`，由目录发布任务采集，不允许作者在 YAML 填写：
+
+```json
+{
+  "metrics": {
+    "githubStars": { "value": 12, "checkedAt": "2026-09-21T03:23:00.000Z", "status": "ok" },
+    "npmDownloads30d": { "value": 45, "checkedAt": "2026-09-21T03:23:00.000Z", "status": "ok", "start": "2026-08-22", "end": "2026-09-20" }
+  }
+}
+```
+
+- `githubStars` 来自 GitHub REST 仓库的 `stargazers_count`，不是平台点赞数。
+- `npmDownloads30d` 仅查询已通过安装来源校验的 npm 包；截至 UTC 昨天的 30 天窗口，不是安装量、活跃用户或独立用户数。不累计 GitHub Release 下载。
+- `ok` 表示成功采集或仍在缓存有效期内；`stale` 保留最后成功值及其原始采集时间、下载窗口；`unavailable` 表示没有可用值；`not_applicable` 仅用于非 npm 分发的下载统计。
+- 无值时 `value` 和 `checkedAt` 均为 `null`；真实的 0 保留为数字 0。客户端不能把未知值转换成 0；过期数据应显示更新时间，排序不能把未知当成零下载。
+- `metrics` 缺失的旧目录仍符合 v1；使用旧版严格 Schema 的客户端需要同步此可选字段定义，再消费新版目录。安装字段没有变化。统计不可用不等于工作台安装探测失败。
+
+实现借鉴 [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) 的集中采集、失败保留和明确日期窗口；本目录复用已验证的 npm 分发身份，按仓库/包去重，逐包限速请求，不复制其 README 解析或模糊仓库匹配。

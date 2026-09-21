@@ -6,3 +6,5 @@ node_modules/
 *.log
 
 data/index.json
+
+.cache/

@@ -336,6 +336,179 @@
                 "const": "ok"
               }
             }
+          },
+          "metrics": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "githubStars",
+              "npmDownloads30d"
+            ],
+            "properties": {
+              "githubStars": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "value",
+                  "checkedAt",
+                  "status"
+                ],
+                "properties": {
+                  "value": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "checkedAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "status": {
+                    "enum": [
+                      "ok",
+                      "stale",
+                      "unavailable"
+                    ]
+                  }
+                },
+                "allOf": [
+                  {
+                    "if": {
+                      "properties": {
+                        "status": {
+                          "enum": [
+                            "ok",
+                            "stale"
+                          ]
+                        }
+                      }
+                    },
+                    "then": {
+                      "required": [
+                        "value",
+                        "checkedAt"
+                      ],
+                      "properties": {
+                        "value": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "checkedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    },
+                    "else": {
+                      "properties": {
+                        "value": {
+                          "type": "null"
+                        },
+                        "checkedAt": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                ]
+              },
+              "npmDownloads30d": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "value",
+                  "checkedAt",
+                  "status"
+                ],
+                "properties": {
+                  "value": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "checkedAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "status": {
+                    "enum": [
+                      "ok",
+                      "stale",
+                      "unavailable",
+                      "not_applicable"
+                    ]
+                  },
+                  "start": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "end": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                },
+                "allOf": [
+                  {
+                    "if": {
+                      "properties": {
+                        "status": {
+                          "enum": [
+                            "ok",
+                            "stale"
+                          ]
+                        }
+                      }
+                    },
+                    "then": {
+                      "required": [
+                        "value",
+                        "checkedAt",
+                        "start",
+                        "end"
+                      ],
+                      "properties": {
+                        "value": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "checkedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "start": {
+                          "type": "string",
+                          "format": "date"
+                        },
+                        "end": {
+                          "type": "string",
+                          "format": "date"
+                        }
+                      }
+                    },
+                    "else": {
+                      "properties": {
+                        "value": {
+                          "type": "null"
+                        },
+                        "checkedAt": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
           }
         }
       }
