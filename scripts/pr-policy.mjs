@@ -1,6 +1,9 @@
 const entryPath = /^data\/workbenches\/[A-Za-z0-9_.-]+__[A-Za-z0-9_.-]+\.yml$/
 
 export function classifyChanges(files) {
+  if (files.some((file) => file.status !== 'removed' && /^(dist|\.cache)\//.test(file.filename))) {
+    throw new Error('不能提交生成目录 dist/ 或 .cache/；只允许删除已跟踪的生成文件')
+  }
   const entries = files.filter((file) => [file.filename, file.previous_filename].some((name) => name?.startsWith('data/workbenches/') && name !== 'data/workbenches/.gitkeep'))
   if (!entries.length) return { type: 'maintenance' }
   if (files.length !== 1 || entries.length !== 1) throw new Error('投稿或下架 PR 必须只修改一份工作台 YAML，不能混入其他条目或基础设施修改')

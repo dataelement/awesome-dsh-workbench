@@ -40,7 +40,7 @@ test('rejects generated dist changes beside one YAML', async () => {
   git('commit', '-qm', 'entry and catalog')
   const result = spawnSync(process.execPath, [script, base, 'HEAD'], { cwd: directory, encoding: 'utf8' })
   assert.equal(result.status, 1)
-  assert.match(result.stderr, /不能混入/)
+  assert.match(result.stderr, /不能提交生成目录/)
 })
 
 test('rejects catalog data mixed with unrelated changes', async () => {
@@ -61,4 +61,14 @@ test('separates maintenance, removal, and submission scope', async () => {
   assert.equal(classifyChanges([{ filename: 'data/workbenches/owner__repo.yml', status: 'removed' }]).type, 'removal')
   assert.throws(() => classifyChanges([{ filename: 'README.md', previous_filename: 'data/workbenches/owner__repo.yml', status: 'renamed' }]), /路径/)
   assert.throws(() => classifyChanges([{ filename: 'data/workbenches/owner__repo.json', status: 'added' }]), /路径/)
+})
+
+test('rejects generated-only and renamed output while allowing cleanup', async () => {
+  const { classifyChanges } = await import('../scripts/pr-policy.mjs')
+  for (const filename of ['dist/catalog.json', '.cache/catalog-preview.json']) {
+    for (const status of ['added', 'modified', 'renamed']) {
+      assert.throws(() => classifyChanges([{ filename, status, previous_filename: 'README.md' }]), /不能提交生成目录/)
+    }
+    assert.equal(classifyChanges([{ filename, status: 'removed' }]).type, 'maintenance')
+  }
 })

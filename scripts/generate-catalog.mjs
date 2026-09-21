@@ -1,23 +1,19 @@
 #!/usr/bin/env node
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { generateCatalog, loadEntries, ROOT } from './catalog-lib.mjs'
 
-const output = path.join(ROOT, 'dist/catalog.json')
-const categories = JSON.parse(await fs.readFile(path.join(ROOT, 'data/categories.json'), 'utf8'))
-const contents = `${JSON.stringify(generateCatalog(await loadEntries(), categories), null, 2)}\n`
-
-if (process.argv.includes('--check')) {
-  let current = ''
-  try { current = await fs.readFile(output, 'utf8') } catch {}
-  if (current !== contents) {
-    console.error('dist/catalog.json 不是最新结果，请运行 npm run generate')
-    process.exitCode = 1
-  } else {
-    console.log('dist/catalog.json 已是最新结果')
-  }
-} else {
+export async function generatePreview(root = ROOT) {
+  const output = path.join(root, '.cache/catalog-preview.json')
+  const categories = JSON.parse(await fs.readFile(path.join(root, 'data/categories.json'), 'utf8'))
+  const records = await loadEntries({ directory: path.join(root, 'data/workbenches') })
+  const contents = `${JSON.stringify(generateCatalog(records, categories), null, 2)}\n`
   await fs.mkdir(path.dirname(output), { recursive: true })
   await fs.writeFile(output, contents)
-  console.log('已生成 dist/catalog.json')
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+  await generatePreview()
+  console.log('已生成 .cache/catalog-preview.json')
 }

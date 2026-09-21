@@ -69,9 +69,9 @@ v1 只支持仓库根目录的一个工作台，暂不支持 monorepo 子目录�
 
 ## 生成产物
 
-`npm run generate` 生成 `kind: preview` 的离线展示预览，不能作为安装目录发布。`npm run probe` 解析安装优先级并校验，生成 `kind: catalog`，输出 `distribution`、实际版本、源码 commit、运行时 ID、图片 URL/校验值及探测状态。不要把这些生成字段抄回 YAML。
+`npm run generate` 在 `.cache/catalog-preview.json` 生成 `kind: preview` 的离线展示预览，不能作为安装目录发布。`npm run probe` 解析安装优先级并校验，在 `dist/catalog.json` 生成 `kind: catalog`，输出 `distribution`、实际版本、源码 commit、运行时 ID、图片 URL/校验值及探测状态。不要把这些生成字段抄回 YAML。
 
-`dist/` 不提交；全部探测通过后才生成发布候选。首次收录经过人工审核，后续发版由作者负责并自动探测；这不意味着每个后续版本经过人工审核或安全审计。
+`dist/` 和 `.cache/` 不提交；全部探测通过后才生成发布候选。首次收录经过人工审核，后续发版由作者负责并自动探测；这不意味着每个后续版本经过人工审核或安全审计。
 
 
 正式 JSON 由 [catalog.schema.json](../schema/catalog.schema.json)校验，版本为 `schemaVersion: 1`：

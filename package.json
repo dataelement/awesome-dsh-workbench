@@ -3,11 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "npm run validate && npm test && npm run generate && npm run generate:check",
+    "check": "npm run validate && npm test && npm run generate",
     "validate": "node scripts/validate-data.mjs",
     "validate:pr": "node scripts/validate-pr.mjs",
     "generate": "node scripts/generate-catalog.mjs",
-    "generate:check": "node scripts/generate-catalog.mjs --check",
     "probe": "node scripts/probe-catalog.mjs",
     "test": "node --test"
   },

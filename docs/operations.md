@@ -16,7 +16,7 @@
 
 | 工作流 | 触发及作用 |
 | --- | --- |
-| Catalog CI | 所有 PR 和 main push：离线 Schema/example、测试、确定性生成、投稿范围 |
+| Catalog CI | 所有 PR 和 main push：离线 Schema/example、测试、离线预览生成、投稿范围 |
 | Catalog candidate → Trusted catalog PR gate | PR 触发无密钥排队，可信 main 脚本通过 API 读取固定 head，检查投稿来源并回写结果 |
 | Build catalog artifact | main push / 手动：完整探测及发布 JSON Schema 校验，生成 artifact；启用发布变量后部署 Pages |
 | 同一构建的每日 schedule | 重新解析 npm → Release → 源码并检查截图，全部成功后产出 artifact；启用发布后自动刷新目录 |
