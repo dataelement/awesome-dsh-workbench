@@ -16,8 +16,10 @@ export async function probeCatalog({ root = ROOT, fetchImpl = authenticatedFetch
   }
   const categories = JSON.parse(await fs.readFile(path.join(root, 'data/categories.json'), 'utf8'))
   const catalog = await buildPublishedCatalog(results, categories)
-  await fs.mkdir(path.join(root, 'dist'), { recursive: true })
-  await fs.writeFile(path.join(root, 'dist/catalog.json'), `${JSON.stringify(catalog, null, 2)}\n`)
+  const output = path.join(root, 'data/index.json')
+  const temporary = `${output}.${process.pid}.tmp`
+  await fs.writeFile(temporary, `${JSON.stringify(catalog, null, 2)}\n`, { flag: 'wx' })
+  await fs.rename(temporary, output)
   console.log(`完整探测并生成 ${records.length} 个工作台`)
 }
 

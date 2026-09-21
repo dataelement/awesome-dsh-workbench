@@ -194,7 +194,7 @@ test('published contract accepts every actual installation variant and rejects d
   }
 })
 
-test('an empty offline preview still cannot be published', async () => {
+test('an unprobed generated structure cannot be published', async () => {
   await assert.rejects(() => validatePublishedCatalog(generateCatalog([], [])), /协议/)
   await assert.rejects(() => buildPublishedCatalog([{ record: record(), error: { status: 'incomplete' } }], []), /未完成/)
   assert.equal((await buildPublishedCatalog([], [])).kind, 'catalog')

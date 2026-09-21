@@ -1,80 +1,40 @@
-name: Build catalog artifact
+name: Publish workbench index
 on:
   push:
     branches: [main]
   schedule:
     - cron: '23 3 * * *'
   workflow_dispatch:
-    inputs:
-      source_commit:
-        description: '回滚/重建时指定已合入 main 的完整 commit SHA；留空使用 main'
-        type: string
-        required: false
 permissions:
   contents: read
+  pages: write
+  id-token: write
 concurrency:
-  group: catalog-publication
-  cancel-in-progress: false
+  group: workbench-pages-${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'probe' || 'push' }}
+  cancel-in-progress: true
 jobs:
-  build:
+  publish:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    outputs:
-      publish: ${{ steps.mode.outputs.publish }}
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: main
-          fetch-depth: 0
           persist-credentials: false
-      - name: Select approved source revision
-        env:
-          SOURCE_COMMIT: ${{ inputs.source_commit }}
-        run: |
-          if [ -n "$SOURCE_COMMIT" ]; then
-            [[ "$SOURCE_COMMIT" =~ ^[a-f0-9]{40}$ ]] || exit 1
-            git merge-base --is-ancestor "$SOURCE_COMMIT" origin/main
-            git checkout --detach "$SOURCE_COMMIT"
-          fi
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm run check
-      - name: Resolve installation sources and build complete catalog
+      - name: Build data/index.json
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          npm run probe
-          node scripts/publication.mjs
-      - uses: actions/upload-artifact@v4
-        with:
-          name: workbench-catalog-${{ github.run_id }}
-          path: dist/
-          if-no-files-found: error
-      - id: mode
-        env:
-          ENABLED: ${{ vars.PUBLISH_CATALOG }}
-        run: |
-          if [ "$ENABLED" = true ]; then
-            echo 'publish=true' >> "$GITHUB_OUTPUT"
-          fi
+        run: npm run probe
       - uses: actions/upload-pages-artifact@v3
-        if: steps.mode.outputs.publish == 'true'
         with:
-          path: dist/
-  deploy:
-    needs: build
-    if: needs.build.outputs.publish == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
+          path: data/
       - id: deployment
         uses: actions/deploy-pages@v4

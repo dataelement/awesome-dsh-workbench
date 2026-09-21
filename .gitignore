@@ -5,5 +5,4 @@
 node_modules/
 *.log
 
-dist/
-.cache/
+data/index.json

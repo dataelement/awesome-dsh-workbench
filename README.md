@@ -2,7 +2,7 @@
 
 DSH Desktop 工作台目录：作者通过 Pull Request 提交工作台 YAML，维护者审核后，由流水线生成可追溯的目录。源码、安装包和图片保留在作者仓库。
 
-**当前没有已收录工作台。** 目录构建、发布工作流与 Desktop 客户端接入是不同状态；Actions artifact 不等于线上市场已经接入。首次发布前按[运行手册](docs/operations.md)配置合并保护和 GitHub Pages。
+**当前没有已收录工作台。** 合并到 main 后，流水线从 `data/workbenches/*.yml` 生成 `data/index.json`，并通过 GitHub Pages 发布。Desktop 客户端接入仍需独立验收。
 
 ## 投稿
 

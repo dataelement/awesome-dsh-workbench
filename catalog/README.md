@@ -67,11 +67,11 @@ v1 只支持仓库根目录的一个工作台，暂不支持 monorepo 子目录�
 
 校验器的宿主格式依据固定于 Desktop commit `9d04845dfe6b66f9df3a5e0b401b9a8e1f1d45f9` 的[包校验脚本](https://github.com/dataelement/dsh-desktop/blob/9d04845dfe6b66f9df3a5e0b401b9a8e1f1d45f9/scripts/check-workbench-package.mjs)；开发方式可参考该版本的[作者指南](https://github.com/dataelement/dsh-desktop/blob/9d04845dfe6b66f9df3a5e0b401b9a8e1f1d45f9/packages/dsh-desktop-workbenches/development-guide.zh.md)。此依据不代表所有 Desktop 发布版本兼容，投稿仍需记录实际验证的宿主版本；目录消费者接入和安装需独立验收。
 
-## 生成产物
+## 客户端索引
 
-`npm run generate` 在 `.cache/catalog-preview.json` 生成 `kind: preview` 的离线展示预览，不能作为安装目录发布。`npm run probe` 解析安装优先级并校验，在 `dist/catalog.json` 生成 `kind: catalog`，输出 `distribution`、实际版本、源码 commit、运行时 ID、图片 URL/校验值及探测状态。不要把这些生成字段抄回 YAML。
+`npm run probe` 解析安装优先级并校验，在 runner 的 `data/index.json` 生成客户端索引，输出 `distribution`、实际版本、源码 commit、运行时 ID、图片 URL、校验值及探测状态。不要把这些生成字段抄回 YAML。
 
-`dist/` 和 `.cache/` 不提交；全部探测通过后才生成发布候选。首次收录经过人工审核，后续发版由作者负责并自动探测；这不意味着每个后续版本经过人工审核或安全审计。
+`data/index.json` 不提交；GitHub Actions 将整个 `data/` 目录上传为 Pages artifact，因此发布后索引位于站点根路径 `/index.json`。全部探测通过后才替换 Pages 部署。首次收录经过人工审核，后续发版由作者负责并自动探测；这不意味着每个后续版本经过人工审核或安全审计。
 
 
 正式 JSON 由 [catalog.schema.json](../schema/catalog.schema.json)校验，版本为 `schemaVersion: 1`：
@@ -84,4 +84,4 @@ v1 只支持仓库根目录的一个工作台，暂不支持 monorepo 子目录�
 
 三种类型都包含实际版本与兼容范围；消费者按 type 分支处理，不能从描述或命令字符串反推安装目标，不能遇到损坏包后悄悄换来源。顶层条目版本必须与选中安装版本一致，仓库身份、源码 commit 和截图所属仓库有跨字段校验。未知字段及非成功探测结果不能进入正式输出。候选探测阶段和正式发布前都执行同一输出校验。
 
-投稿和机器输出是两个契约，前者不携带版本字段；后者变更不兼容结构时必须升级 schemaVersion，并说明消费者迁移。
+投稿和客户端索引是两个契约，前者不携带版本字段；后者变更不兼容结构时必须升级 schemaVersion，并说明消费者迁移。

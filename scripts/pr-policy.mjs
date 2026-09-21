@@ -1,8 +1,8 @@
 const entryPath = /^data\/workbenches\/[A-Za-z0-9_.-]+__[A-Za-z0-9_.-]+\.yml$/
 
 export function classifyChanges(files) {
-  if (files.some((file) => file.status !== 'removed' && /^(dist|\.cache)\//.test(file.filename))) {
-    throw new Error('不能提交生成目录 dist/ 或 .cache/；只允许删除已跟踪的生成文件')
+  if (files.some((file) => file.status !== 'removed' && /^(data\/index\.json|dist\/|\.cache\/)/.test(file.filename))) {
+    throw new Error('不能提交生成索引 data/index.json 或旧生成目录；只允许删除已跟踪的生成文件')
   }
   const entries = files.filter((file) => [file.filename, file.previous_filename].some((name) => name?.startsWith('data/workbenches/') && name !== 'data/workbenches/.gitkeep'))
   if (!entries.length) return { type: 'maintenance' }
