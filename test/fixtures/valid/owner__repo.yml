@@ -1,10 +1,10 @@
-# 结构示例；替换仓库和图片路径后投稿。
+# 结构示例；替换仓库和图片地址后投稿。
 url: https://github.com/owner/repo
 category: productivity
 description:
   zh: 帮助整理项目资料、跟进任务并生成工作报告。
   en: Organize project materials, track tasks, and generate work reports.
 screenshots:
-  - docs/images/overview.webp
+  - https://raw.githubusercontent.com/owner/repo/main/docs/images/overview.webp
 # 仅当需要指定预构建安装包时填写；不是命令，npm 仍然优先。
 # tarball: https://github.com/owner/repo/releases/latest/download/my-workbench.tgz

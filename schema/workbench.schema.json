@@ -35,8 +35,9 @@
       "uniqueItems": true,
       "items": {
         "type": "string",
-        "minLength": 1,
-        "maxLength": 500
+        "format": "uri",
+        "maxLength": 2048,
+        "pattern": "^https://(raw\\.githubusercontent\\.com/[^/]+/[^/]+/|github\\.com/[^/]+/[^/]+/blob/).+\\.(png|jpe?g|webp|PNG|JPG|JPEG|WEBP)$"
       }
     },
     "description": {

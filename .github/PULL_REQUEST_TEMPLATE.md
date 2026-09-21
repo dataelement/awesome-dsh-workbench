@@ -21,7 +21,7 @@
 ## 检查
 
 - [ ] 已运行 `npm ci --ignore-scripts && npm run check`，以下写明实际结果。
-- [ ] YAML 与精简 example/Schema 一致，截图路径与工作台信息在同一个文件。
+- [ ] YAML 与精简 example/Schema 一致，截图 HTTPS 地址与工作台信息在同一个文件。
 - [ ] 未提交生成目录、安装包、凭据、个人邮箱或真实业务数据。
 - [ ] 理解 CI、人工审核、合并、上线是不同状态，不自行声明审核通过。
 

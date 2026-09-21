@@ -38,6 +38,18 @@ export function safeRelativePath(value, { allowDotPrefix = false } = {}) {
     && value.split('/').every((part) => part && part !== '.' && part !== '..')
 }
 
+export function screenshotUrl(value, owner, repository) {
+  let url
+  try { url = new URL(value) } catch { throw new Error('截图必须是源仓库托管的完整 HTTPS 图片地址') }
+  if (url.protocol !== 'https:' || url.username || url.password || url.port || url.search || url.hash || url.href !== value) throw new Error('截图地址不能包含凭据、查询参数或不规范路径')
+  const parts = url.pathname.slice(1).split('/')
+  if (parts[0]?.toLowerCase() !== owner.toLowerCase() || parts[1]?.toLowerCase() !== repository.toLowerCase()) throw new Error('截图必须属于条目指向的源仓库')
+  if (url.hostname === 'github.com' && parts[2] === 'blob') parts.splice(2, 1)
+  else if (url.hostname !== 'raw.githubusercontent.com') throw new Error('截图必须使用 GitHub 文件地址或 raw 图片直链')
+  if (parts.length < 4 || parts.some((part) => !part || /[\\/\x00-\x1f]/.test(decodeURIComponent(part)) || ['.', '..'].includes(decodeURIComponent(part))) || !/\.(png|jpe?g|webp)$/i.test(parts.at(-1))) throw new Error('截图必须是安全的 PNG/JPEG/WebP 文件地址')
+  return `https://raw.githubusercontent.com/${parts.join('/')}`
+}
+
 export async function readEntry(file, validate, { example = false } = {}) {
   const relative = path.relative(ROOT, file)
   const stat = await fs.lstat(file)
@@ -58,9 +70,8 @@ export async function readEntry(file, validate, { example = false } = {}) {
   if (!example && path.basename(file).toLowerCase() !== expected) {
     throw new Error(`${relative} 文件名应为 ${owner}__${repository}.yml`)
   }
-  for (const image of entry.screenshots) {
-    if (!safeRelativePath(image) || !/\.(png|jpe?g|webp)$/i.test(image)) throw new Error(`${relative} 的截图必须是安全的相对 PNG/JPEG/WebP 路径`)
-  }
+  const images = entry.screenshots.map((image) => screenshotUrl(image, owner, repository))
+  if (new Set(images).size !== images.length) throw new Error(`${relative} 的截图地址重复`)
   if (entry.tarball) {
     const asset = new URL(entry.tarball)
     if (asset.href !== entry.tarball || asset.username || asset.password || asset.search || asset.hash || !asset.pathname.toLowerCase().startsWith(`/${owner}/${repository}/releases/`.toLowerCase())) {

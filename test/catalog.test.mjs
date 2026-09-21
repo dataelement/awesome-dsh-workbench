@@ -3,7 +3,7 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
-import { createValidator, generateCatalog, readEntry, ROOT } from '../scripts/catalog-lib.mjs'
+import { createValidator, generateCatalog, readEntry, ROOT, screenshotUrl } from '../scripts/catalog-lib.mjs'
 
 const fixture = path.join(ROOT, 'test/fixtures/valid/owner__repo.yml')
 
@@ -43,7 +43,7 @@ test('rejects unsafe, duplicate and oversized screenshot lists', async (t) => {
   const file = path.join(directory, 'owner__repo.yml')
   for (const imagePath of ['../x.png', '/x.png', 'C:/x.png', 'a\\b.png', 'https://example.com/x.png', '%2e%2e/x.png']) {
     await fs.writeFile(file, JSON.stringify({ ...entry, screenshots: [imagePath] }))
-    await assert.rejects(() => readEntry(file, validate), /安全/)
+    await assert.rejects(() => readEntry(file, validate))
   }
   for (const screenshots of [[], ['a.png', 'a.png'], Array.from({ length: 6 }, (_, i) => `${i}.png`)]) assert.equal(validate({ ...entry, screenshots }), false)
 })
@@ -80,5 +80,14 @@ test('tarball is optional, explicit, and restricted to the submitted repository'
   for (const tarball of ['https://github.com/other/repo/releases/download/v1/a.tgz', 'https://example.com/a.tgz', 'https://github.com/owner/repo/releases/download/../a.tgz', 'npm install something']) {
     await fs.writeFile(file, JSON.stringify({ ...entry, tarball }))
     await assert.rejects(() => readEntry(file, validate))
+  }
+})
+
+test('screenshots use absolute URLs hosted in the source repository', async () => {
+  const raw = 'https://raw.githubusercontent.com/owner/repo/main/docs/image.png'
+  assert.equal(screenshotUrl(raw, 'owner', 'repo'), raw)
+  assert.equal(screenshotUrl('https://github.com/owner/repo/blob/main/docs/image.png', 'owner', 'repo'), raw)
+  for (const value of ['docs/image.png', 'http://raw.githubusercontent.com/owner/repo/main/image.png', 'https://example.com/owner/repo/main/image.png', 'https://raw.githubusercontent.com/other/repo/main/image.png', 'https://raw.githubusercontent.com/owner/repo/main/%2e%2e/image.png', raw + '?token=secret', 'https://github.com/owner/repo/tree/main/docs/image.png']) {
+    assert.throws(() => screenshotUrl(value, 'owner', 'repo'))
   }
 })

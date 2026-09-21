@@ -4,7 +4,7 @@ import os from 'node:os'
 import path from 'node:path'
 import * as tar from 'tar'
 import semver from 'semver'
-import { safeRelativePath } from './catalog-lib.mjs'
+import { safeRelativePath, screenshotUrl } from './catalog-lib.mjs'
 import { inspectImage, readBounded, MAX_IMAGE_BYTES, MAX_PACKAGE_BYTES } from './media-lib.mjs'
 
 export class ProbeError extends Error {
@@ -166,13 +166,12 @@ export async function probeEntry(record, { fetchImpl = fetch } = {}) {
   const distribution = await resolveDistribution(fetchImpl, entry, owner, repository, commit.sha, manifest, pkg)
   const screenshots = []
   for (const [index, image] of entry.screenshots.entries()) {
-    if (!safeRelativePath(image)) throw new ProbeError('invalid-image', '截图路径不安全')
-    const url = sourceFileUrl(owner, repository, commit.sha, image)
+    const url = screenshotUrl(image, owner, repository)
     const response = await fetchImpl(url)
     if (!response.ok) throw new ProbeError('invalid-image', `截图不可读取：${image}`, { incomplete: response.status === 429 || response.status >= 500 })
     try {
       const bytes = await readBounded(response, MAX_IMAGE_BYTES, image)
-      const dimensions = await inspectImage(bytes, image)
+      const dimensions = await inspectImage(bytes, new URL(url).pathname)
       screenshots.push({ url, alt: `${name} 截图 ${index + 1}`, ...dimensions, sha256: crypto.createHash('sha256').update(bytes).digest('hex') })
     } catch (error) { throw new ProbeError('invalid-image', `${image}: ${error.message}`) }
   }

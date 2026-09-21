@@ -13,8 +13,8 @@ description:
   zh: 帮助整理项目资料、跟进任务并生成工作报告。
   en: Organize project materials, track tasks, and generate work reports.
 screenshots:
-  - docs/images/overview.webp
-  - docs/images/result.png
+  - https://raw.githubusercontent.com/owner/repo/main/docs/images/overview.webp
+  - https://raw.githubusercontent.com/owner/repo/main/docs/images/result.png
 # 可选：明确选择预构建安装包；npm 仍优先。
 # tarball: https://github.com/owner/repo/releases/latest/download/custom-workbench.tgz
 ```
@@ -24,7 +24,7 @@ screenshots:
 | `url` | GitHub 仓库主页，与文件名一致 |
 | `category` | [七个分类](../data/categories.json)之一 |
 | `description.zh` / `description.en` | 中英文均必填、非空单行；不接受未支持的语言键，不限制为恰好一句或固定字数 |
-| `screenshots` | 1–5 个仓库内图片路径，第一张为封面 |
+| `screenshots` | 1–5 个源仓库托管的完整 HTTPS 图片地址，第一张为封面 |
 | `tarball` | 可选，同仓库 GitHub Release 的 `.tgz` / `.tar.gz` URL，不是安装命令 |
 
 [完整 example](../examples/workbench.yml)直接使用正式 [Schema](../schema/workbench.schema.json)校验。不要填名称、作者 ID、版本、源码 commit、npm 包名、校验值、验证记录或权限表。这些分别来自 GitHub、工作台包、自动探测及 PR 审核材料。输入 YAML 没有独立 `schemaVersion`，输出目录保留机器协议版本。
@@ -51,14 +51,15 @@ screenshots:
 ## 截图标准
 
 - 截图声明仅在 YAML，不从 README、`screenshots.json` 或 manifest 补充。
-- 图片放作者仓库，使用相对路径；每次构建解析默认分支 commit 后，图片 URL 固定到该 commit。
+- 图片上传到条目对应的源仓库，YAML 填完整 HTTPS 地址，不接受相对路径。推荐 `https://raw.githubusercontent.com/owner/repo/<ref>/path/image.webp`；也接受 `https://github.com/owner/repo/blob/<ref>/path/image.webp`，探测时转换为 raw 直链。
+- 图片地址可使用分支、tag 或 commit；需要固定图片内容时建议填写 commit 地址。截图引用独立于源码安装 commit，不自动改写为默认分支版本。
 - 1–5 张静态 PNG/JPEG/WebP；单张不超过 2 MiB，总像素不超过 16 MiPixels。校验真实格式、扩展名、完整解码与大小。
-- 不允许绝对路径、`..`、反斜线、外部 URL、编码逃逸或重复路径。
+- 不允许本地路径、HTTP 明文地址、其他仓库或第三方托管地址、凭据、查询参数、片段、编码逃逸或重复图片地址；同一图片的 blob/raw 两种写法也视为重复。
 - 第一张为封面，按列表顺序显示，辅助文本由工作台名称和图片序号生成。
 - 建议横向 16:9、宽度至少 1280px；比例不是硬门槛，展示端等比适配。
 - 必须是真实产品画面，拥有素材使用权，不含凭据、个人信息或客户数据。图片应与用户可安装的版本相符，由作者维护、人工抽查。
 
-修改图片内容或发布版本无需目录 PR；双语介绍、图片路径、顺序、分类、仓库地址或 tarball 选择改变时更新 YAML。
+修改图片内容或发布版本无需目录 PR；双语介绍、图片地址、顺序、分类、仓库地址或 tarball 选择改变时更新 YAML。
 
 ## 包与宿主
 
@@ -79,6 +80,6 @@ v1 只支持仓库根目录的一个工作台，暂不支持 monorepo 子目录�
 | `github-release` | 固定 `url`、`version`、`sha256` |
 | `github-source` | 仓库 `url` 与完整 `commit` |
 
-三种类型都包含实际版本与兼容范围；消费者按 type 分支处理，不能从描述或命令字符串反推安装目标，不能遇到损坏包后悄悄换来源。顶层条目版本必须与选中安装版本一致，仓库身份、源码 commit 和截图 URL 有跨字段校验。未知字段及非成功探测结果不能进入正式输出。候选探测阶段和正式发布前都执行同一输出校验。
+三种类型都包含实际版本与兼容范围；消费者按 type 分支处理，不能从描述或命令字符串反推安装目标，不能遇到损坏包后悄悄换来源。顶层条目版本必须与选中安装版本一致，仓库身份、源码 commit 和截图所属仓库有跨字段校验。未知字段及非成功探测结果不能进入正式输出。候选探测阶段和正式发布前都执行同一输出校验。
 
 投稿和机器输出是两个契约，前者不携带版本字段；后者变更不兼容结构时必须升级 schemaVersion，并说明消费者迁移。
