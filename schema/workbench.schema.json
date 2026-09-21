@@ -7,6 +7,7 @@
   "required": [
     "url",
     "category",
+    "description",
     "screenshots"
   ],
   "properties": {
@@ -36,6 +37,28 @@
         "type": "string",
         "minLength": 1,
         "maxLength": 500
+      }
+    },
+    "description": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "zh",
+        "en"
+      ],
+      "properties": {
+        "zh": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 200,
+          "pattern": "\\S"
+        },
+        "en": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 200,
+          "pattern": "\\S"
+        }
       }
     }
   }

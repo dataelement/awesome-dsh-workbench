@@ -1,5 +1,8 @@
 # 结构示例；替换仓库和图片路径后投稿。
 url: https://github.com/owner/repo
 category: productivity
+description:
+  zh: 帮助整理项目资料、跟进任务并生成工作报告。
+  en: Organize project materials, track tasks, and generate work reports.
 screenshots:
   - docs/images/overview.webp

@@ -11,16 +11,17 @@ test('minimal example is the production protocol, with no duplicated runtime or 
   const record = await readEntry(fixture, await createValidator())
   const example = await readEntry(path.join(ROOT, 'examples/workbench.yml'), await createValidator(), { example: true })
   assert.deepEqual(record, example)
-  assert.deepEqual(Object.keys(record.entry), ['url', 'category', 'screenshots'])
+  assert.deepEqual(Object.keys(record.entry), ['url', 'category', 'description', 'screenshots'])
   const catalog = generateCatalog([record], [])
   assert.equal(catalog.workbenches[0].id, 'owner/repo')
+  assert.deepEqual(catalog.workbenches[0].description, record.entry.description)
   assert.equal(catalog.workbenches[0].distribution, undefined) // Only a successful probe chooses an install target.
 })
 
 test('rejects redundant author fields', async () => {
   const validate = await createValidator()
   const { entry } = await readEntry(fixture, validate)
-  for (const key of ['id', 'workbenchId', 'schemaVersion', 'version', 'source', 'author', 'verification', 'requirements', 'npm', 'name', 'description', 'release']) {
+  for (const key of ['id', 'workbenchId', 'schemaVersion', 'version', 'source', 'author', 'verification', 'requirements', 'npm', 'name', 'release']) {
     assert.equal(validate({ ...entry, [key]: 'not-author-settable' }), false, key)
   }
 })
@@ -52,4 +53,15 @@ test('catalog uniqueness key derives from GitHub owner/repository, sorted determ
   const make = (owner) => ({ owner, repository: 'Repo', entry: { ...entry, url: `https://github.com/${owner}/Repo` } })
   assert.equal(generateCatalog([make('Owner')], []).workbenches[0].id, 'owner/repo')
   assert.deepEqual(generateCatalog([make('zeta'), make('alpha')], []), generateCatalog([make('alpha'), make('zeta')], []))
+})
+
+test('requires both description locales and rejects blanks, extra locales, and legacy strings', async () => {
+  const validate = await createValidator()
+  const { entry } = await readEntry(fixture, validate)
+  for (const description of [
+    undefined, 'legacy description', { zh: entry.description.zh }, { en: entry.description.en },
+    { ...entry.description, en: ' '.repeat(20) }, { ...entry.description, zh: '' },
+    { ...entry.description, en: 'x'.repeat(201) }, { ...entry.description, fr: 'extra language' }
+  ]) assert.equal(validate({ ...entry, description }), false)
+  assert.equal(validate(entry), true)
 })
