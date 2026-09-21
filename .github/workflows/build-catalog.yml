@@ -1,16 +1,24 @@
-name: Build catalog artifact
-
+name: Publish workbench index
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: '23 3 * * *'
   workflow_dispatch:
-
 permissions:
   contents: read
-
+  pages: write
+  id-token: write
+concurrency:
+  group: workbench-pages-${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'probe' || 'push' }}
+  cancel-in-progress: true
 jobs:
-  build:
+  publish:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -20,14 +28,13 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci --ignore-scripts
-      - run: npm run validate
-      - run: npm test
-      - name: Probe remote sources and build catalog
+      - run: npm run check
+      - name: Build data/index.json
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: npm run probe
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-pages-artifact@v3
         with:
-          name: workbench-catalog
-          path: dist/catalog.json
-          if-no-files-found: error
+          path: data/
+      - id: deployment
+        uses: actions/deploy-pages@v4

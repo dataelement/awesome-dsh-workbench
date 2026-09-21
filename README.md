@@ -1,37 +1,23 @@
 # Awesome DSH Workbench
 
-DSH Desktop 工作台市场的公开目录。作者保管自己的源码和发布包；本仓库只保存一份简短的仓库索引，并生成给客户端读取的 `dist/catalog.json`。
+DSH Desktop 工作台目录：作者通过 Pull Request 提交工作台 YAML，维护者审核后，由流水线生成可追溯的目录。源码、安装包和图片保留在作者仓库。
 
-## 目录怎样工作
-
-- 一个源码仓库对应 `data/workbenches/<owner>__<repo>.yml`。
-- 第一次上架或修改展示信息，通过 GitHub Pull Request 提交这个 YAML。
-- 作者以后发布新版本，无需为每个版本改目录文件。后续版本探测属于下一阶段，不在本仓库联网执行。
-- 本仓库不复制和托管作者的安装包。
-
-当前安装来源按 DSH Market 的思路保留仓库地址。作者可以额外写明一个不可变的 GitHub Release `.tgz` 地址和 SHA-256；没有填写时，生成目录会标记为 GitHub 源码来源。联网构建会按安全规则发现 npm 包和版本。
-
-受信任构建会联网确认仓库公开、未归档且有可识别许可证，并读取真实的 `workbench.json`。只有仓库根 `package.json` 明确给出包名、且 npm 元数据反向指向同一个 GitHub 仓库时才采用 npm；系统不会根据仓库名猜包名。固定 Release 包会在大小限制内解包读取清单，不执行其中代码。
+**当前没有已收录工作台。** 合并到 main 后，流水线从 `data/workbenches/*.yml` 生成 `data/index.json`，并通过 GitHub Pages 发布。Desktop 客户端接入仍需独立验收。
 
 ## 投稿
 
-阅读 [投稿指南](CONTRIBUTING.md)，复制 [YAML 示例](examples/workbench.yml)，每次只提交一个 `data/workbenches/owner__repo.yml`。`dist/catalog.json` 由 CI 生成，投稿者不要修改或提交。合并代表进入公开目录，不代表 DSH 团队接管工作台源码或后续维护。
+1. 按目标宿主的真实工作台接口开发，在本机安装、打开并验证。
+2. 阅读[贡献指南](CONTRIBUTING.md)，复制 [YAML 示例](examples/workbench.yml)。
+3. 替换全部占位内容，保存为 `data/workbenches/<owner>__<repo>.yml`。截图声明与工作台信息放在同一文件。
+4. 执行 `npm ci --ignore-scripts && npm run check`，提交一个工作台的 PR。
+5. 通过自动检查和维护者审核，合并并成功发布后，才算进入公开目录。
 
-## 本地检查
+GitHub 仓库地址确定条目唯一性，安装优先选择 npm，其次使用可选声明的 Release 安装包，最后回退源码。版本、commit 和校验值由构建解析；作者正常发版无需逐版本提交目录 PR。
 
-```bash
-npm ci
-npm run check
-```
+## 规范入口
 
-`npm run check` 会在本机重新生成 `dist/catalog.json` 供检查，但投稿时不要提交它。生成结果按仓库 ID 排序且不含时间戳，相同输入始终得到相同文件。
+- [目录字段与图片标准](catalog/README.md)
+- [投稿与维护者审核](CONTRIBUTING.md)
+- [发布、巡检和回滚](docs/operations.md)
 
-字段说明见 [目录协议](catalog/README.md)，审核标准见 [验收清单](docs/review-checklist.md)。
-
-## 自动化边界
-
-- 投稿 PR 的普通工作流不检出也不执行贡献者代码。
-- `workflow_run` 门禁始终检出 `main` 上的受信任脚本，只通过 GitHub API 读取 PR 中唯一的候选 YAML。远程服务限流或临时不可用会标为“探测未完成”，内容或安全检查失败会使门禁失败。
-- `main` 分支构建会执行完整探测并上传 `dist/catalog.json` 为 Actions artifact。目前没有发布或部署步骤。
-
-`workflow_run` 门禁必须先随本实现合并到 `main` 才会生效；本次引导 PR 本身不能依靠尚未存在于 `main` 的门禁。
+目录 YAML 是市场元数据协议，不是宿主运行时 manifest；不能直接导入 Desktop 充当工作台包。收录不等于安全审计，也不代表所有平台已经验证。

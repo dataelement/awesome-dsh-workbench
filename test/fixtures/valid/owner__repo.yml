@@ -1,9 +1,11 @@
-# 测试夹具，不会进入公开目录。
+# 结构示例；替换仓库和图片地址后投稿。
 url: https://github.com/owner/repo
-name: 示例工作台
+name: 项目助手
 category: productivity
 description:
-  zh: 用来验证目录工具的示例工作台，不代表市场已收录。
-release:
-  url: https://github.com/owner/repo/releases/download/v1.0.0/workbench.tgz
-  sha256: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  zh: 帮助整理项目资料、跟进任务并生成工作报告。
+  en: Organize project materials, track tasks, and generate work reports.
+screenshots:
+  - https://raw.githubusercontent.com/owner/repo/main/docs/images/overview.webp
+# 仅当需要指定预构建安装包时填写；不是命令，npm 仍然优先。
+# tarball: https://github.com/owner/repo/releases/latest/download/my-workbench.tgz

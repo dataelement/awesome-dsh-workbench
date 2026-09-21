@@ -1,30 +1,87 @@
-# 目录协议 v1
+# 工作台目录协议
 
-作者维护的源文件位于 `data/workbenches/owner__repo.yml`，并由 `schema/workbench.schema.json` 严格校验。
+一个 GitHub 仓库对应一个工作台条目，文件名为 `data/workbenches/<owner>__<repo>.yml`。仓库地址就是目录身份，不另外申请 ID；重命名或转移后应更新到当前主页，旧重定向地址不能重复收录。
 
-作者填写的字段只有：
+## YAML 只保留目录编排信息
 
-| 字段 | 必填 | 含义 |
-| --- | --- | --- |
-| `url` | 是 | GitHub 仓库主页 |
-| `name` | 是 | 展示名称，1–60 个字符 |
-| `category` | 是 | `data/categories.json` 中的分类 ID |
-| `description.zh` | 是 | 10–200 个字符的中文介绍 |
-| `release.url` | 否 | 同一仓库固定版本下的 `.tgz` Release 资源 |
-| `release.sha256` | 随 release | 下载文件的 64 位小写 SHA-256 |
+```yaml
+url: https://github.com/owner/repo
+name: 项目助手
+category: productivity
+description:
+  zh: 帮助整理项目资料、跟进任务并生成工作报告。
+  en: Organize project materials, track tasks, and generate work reports.
+screenshots:
+  - https://raw.githubusercontent.com/owner/repo/main/docs/images/overview.webp
+  - https://raw.githubusercontent.com/owner/repo/main/docs/images/result.png
+# 可选：明确选择预构建安装包；npm 仍优先。
+# tarball: https://github.com/owner/repo/releases/latest/download/custom-workbench.tgz
+```
 
-分类目前有七个：开发 `development`、效率 `productivity`、内容 `content`、数据 `data`、调研 `research`、运营 `operations`、其他 `other`。
+| 字段 | 要求 |
+| --- | --- |
+| `url` | GitHub 仓库主页，与文件名一致 |
+| `name` | 必填，市场展示名称，非空单行字符串 |
+| `category` | [七个分类](../data/categories.json)之一 |
+| `description.zh` / `description.en` | 中英文均必填、非空单行；不接受未支持的语言键，不限制为恰好一句或固定字数 |
+| `screenshots` | 1–5 个源仓库托管的完整 HTTPS 图片地址，第一张为封面 |
+| `tarball` | 可选，同仓库 GitHub Release 的 `.tgz` / `.tar.gz` URL，不是安装命令 |
 
-不接受 schema 以外的字段。`dist/catalog.json` 是 CI 生成文件，包含 `id`、`owner`、`repository` 和 `distribution.type` 等派生字段。投稿者不要编辑或提交它。
+[完整 example](../examples/workbench.yml)直接使用正式 [Schema](../schema/workbench.schema.json)校验。不要填作者 ID、版本、源码 commit、npm 包名、校验值、验证记录或权限表。这些分别来自 GitHub、工作台包、自动探测及 PR 审核材料。输入 YAML 没有独立 `schemaVersion`，输出目录保留机器协议版本。
 
-离线构建只读取仓库内文件，不访问 GitHub、npm 或其他网络服务。目录中没有条目时，仍会生成结构完整的空目录。
+## 安装来源：npm → Release → 源码
 
-`npm run validate` 和 `npm run generate` 属于离线作者检查。`npm run probe` 是受信任环境使用的联网构建，它会补充：
+1. **npm**：从源码 `package.json.name` 发现包名。源码与 npm 最新发布版本的 `repository` 都指回该 GitHub 仓库才采用；下载包，校验 registry 的 SHA-512 integrity、包名、版本、工作台 ID 和可安装文件。输出精确版本、固定下载地址及 SHA-256，客户端不能重新解析 latest。
+2. **Release**：无可用 npm 映射时，使用作者可选填写的 `tarball`。支持固定 tag 或 `latest/download/<作者指定的资源名>`；后者解析为指定资源的固定 tag 下载地址。检查实际包并计算校验值，不按附件数量或文件名惯例猜测安装包。
+3. **源码**：无可用 npm 映射且未声明 tarball 时，使用仓库默认分支解析出的完整 commit，检查实际入口及 bundle patch。仓库中存在 Release 不会隐式改变此选择。
 
-- `workbenchId`、`version` 和截图路径：来自固定 source commit 下的真实 `workbench.json`；
-- `sourceCommit` 和许可证：来自 GitHub API；
-- `npmPackage`：仅在仓库根 `package.json` 和 npm registry 都明确映射回同一仓库时生成；
-- Release 校验结果：校验 SHA-256，并在不执行代码的前提下检查包内清单；
-- `probe.status`：成功条目为 `ok`。失败与暂未完成会阻止完整目录产出并在日志中明确区分。
+已声明 tarball 缺失或校验失败、npm/网络暂不可验证时，停止本次候选发布并保留上一线上目录；不静默改用另一个安装源。作者可通过 PR 修正或删除 tarball。暂不支持逐条缓存或降级。
 
-完整构建还会拒绝目录内重复的 `workbenchId`。`dist/catalog.json` 目前只作为 CI artifact 上传，不进行发布或部署。
+## 信息来源
+
+- 名称：作者填写的 `name`，用于市场列表页展示；非空单行字符串，不被仓库名或包名覆盖。
+- 简介由 YAML 的 `description.zh` 和 `description.en` 提供，离线预览和在线目录均保留两种语言，不使用 GitHub About 或 manifest 覆盖。
+- 仓库身份、作者归属和许可证：GitHub 仓库元数据。
+- 包名、版本、运行时 ID、兼容性、安装地址和校验值：源码与选中发布包。
+
+这些信息随定期探测刷新。修改 GitHub About、发布新包或更新原路径图片都不需要目录 PR。名称、分类、双语介绍和截图顺序属于市场编排，无法可靠地从 repo 元数据获取，因此保留在 YAML。
+
+源码默认分支可能比正式 npm/Release 版本更新，因此不要求二者版本相同。包自身的 manifest/package 版本必须一致，工作台 ID 应保持稳定并与源码声明一致。目录唯一键是仓库；运行时 ID 是从包读取的宿主标识，宿主安装时仍需处理运行时 ID 冲突。
+
+## 截图标准
+
+- 截图声明仅在 YAML，不从 README、`screenshots.json` 或 manifest 补充。
+- 图片上传到条目对应的源仓库，YAML 填完整 HTTPS 地址，不接受相对路径。推荐 `https://raw.githubusercontent.com/owner/repo/<ref>/path/image.webp`；也接受 `https://github.com/owner/repo/blob/<ref>/path/image.webp`，探测时转换为 raw 直链。
+- 图片地址可使用分支、tag 或 commit；需要固定图片内容时建议填写 commit 地址。截图引用独立于源码安装 commit，不自动改写为默认分支版本。
+- 1–5 张静态 PNG/JPEG/WebP；单张不超过 2 MiB，总像素不超过 16 MiPixels。校验真实格式、扩展名、完整解码与大小。
+- 不允许本地路径、HTTP 明文地址、其他仓库或第三方托管地址、凭据、查询参数、片段、编码逃逸或重复图片地址；同一图片的 blob/raw 两种写法也视为重复。
+- 第一张为封面，按列表顺序显示，辅助文本由工作台名称和图片序号生成。
+- 建议横向 16:9、宽度至少 1280px；比例不是硬门槛，展示端等比适配。
+- 必须是真实产品画面，拥有素材使用权，不含凭据、个人信息或客户数据。图片应与用户可安装的版本相符，由作者维护、人工抽查。
+
+修改图片内容或发布版本无需目录 PR；名称、双语介绍、图片地址、顺序、分类、仓库地址或 tarball 选择改变时更新 YAML。
+
+## 包与宿主
+
+v1 只支持仓库根目录的一个工作台，暂不支持 monorepo 子目录。实际包需满足宿主格式：manifest v1、版本一致、安全入口、`dsh.bundle.patch` 及客户端注入。包不超过 8 MiB，解包不执行代码，拒绝越界和链接，限制解压体积与文件数。源码安装要求入口已存在，目录构建不替作者编译。
+
+校验器的宿主格式依据固定于 Desktop commit `9d04845dfe6b66f9df3a5e0b401b9a8e1f1d45f9` 的[包校验脚本](https://github.com/dataelement/dsh-desktop/blob/9d04845dfe6b66f9df3a5e0b401b9a8e1f1d45f9/scripts/check-workbench-package.mjs)；开发方式可参考该版本的[作者指南](https://github.com/dataelement/dsh-desktop/blob/9d04845dfe6b66f9df3a5e0b401b9a8e1f1d45f9/packages/dsh-desktop-workbenches/development-guide.zh.md)。此依据不代表所有 Desktop 发布版本兼容，投稿仍需记录实际验证的宿主版本；目录消费者接入和安装需独立验收。
+
+## 客户端索引
+
+`npm run probe` 解析安装优先级并校验，在 runner 的 `data/index.json` 生成客户端索引，输出 `distribution`、实际版本、源码 commit、运行时 ID、图片 URL、校验值及探测状态。不要把这些生成字段抄回 YAML。
+
+`data/index.json` 不提交；GitHub Actions 将整个 `data/` 目录上传为 Pages artifact，因此发布后索引位于站点根路径 `/index.json`。全部探测通过后才替换 Pages 部署。首次收录经过人工审核，后续发版由作者负责并自动探测；这不意味着每个后续版本经过人工审核或安全审计。
+
+
+正式 JSON 由 [catalog.schema.json](../schema/catalog.schema.json)校验，版本为 `schemaVersion: 1`：
+
+| 安装类型 `distribution.type` | 消费者必须读取的目标 |
+| --- | --- |
+| `npm` | `name`、精确 `version`、`url`、`integrity` 与 `sha256` |
+| `github-release` | 固定 `url`、`version`、`sha256` |
+| `github-source` | 仓库 `url` 与完整 `commit` |
+
+三种类型都包含实际版本与兼容范围；消费者按 type 分支处理，不能从描述或命令字符串反推安装目标，不能遇到损坏包后悄悄换来源。顶层条目版本必须与选中安装版本一致，仓库身份、源码 commit 和截图所属仓库有跨字段校验。未知字段及非成功探测结果不能进入正式输出。候选探测阶段和正式发布前都执行同一输出校验。
+
+投稿和客户端索引是两个契约，前者不携带版本字段；后者变更不兼容结构时必须升级 schemaVersion，并说明消费者迁移。

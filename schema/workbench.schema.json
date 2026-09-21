@@ -1,41 +1,102 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/DSH-AI/awesome-dsh-workbench/schema/workbench.schema.json",
+  "$id": "https://github.com/dataelement/awesome-dsh-workbench/schema/workbench.schema.json",
   "title": "DSH Workbench directory entry",
   "type": "object",
   "additionalProperties": false,
-  "required": ["url", "name", "category", "description"],
+  "required": [
+    "url",
+    "name",
+    "category",
+    "description",
+    "screenshots"
+  ],
   "properties": {
     "url": {
       "type": "string",
       "format": "uri",
       "pattern": "^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/?$"
     },
-    "name": { "type": "string", "minLength": 1, "maxLength": 60 },
     "category": {
       "type": "string",
-      "enum": ["development", "productivity", "content", "data", "research", "operations", "other"]
+      "enum": [
+        "development",
+        "productivity",
+        "content",
+        "data",
+        "research",
+        "operations",
+        "other"
+      ]
+    },
+    "screenshots": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "format": "uri",
+        "maxLength": 2048,
+        "pattern": "^https://(raw\\.githubusercontent\\.com/[^/]+/[^/]+/|github\\.com/[^/]+/[^/]+/blob/).+\\.(png|jpe?g|webp|PNG|JPG|JPEG|WEBP)$"
+      }
     },
     "description": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["zh"],
+      "required": [
+        "zh",
+        "en"
+      ],
       "properties": {
-        "zh": { "type": "string", "minLength": 10, "maxLength": 200 }
+        "zh": {
+          "type": "string",
+          "minLength": 1,
+          "allOf": [
+            {
+              "pattern": "\\S"
+            },
+            {
+              "not": {
+                "pattern": "[\\u0000-\\u001f\\u007f-\\u009f\\u2028\\u2029]"
+              }
+            }
+          ]
+        },
+        "en": {
+          "type": "string",
+          "minLength": 1,
+          "allOf": [
+            {
+              "pattern": "\\S"
+            },
+            {
+              "not": {
+                "pattern": "[\\u0000-\\u001f\\u007f-\\u009f\\u2028\\u2029]"
+              }
+            }
+          ]
+        }
       }
     },
-    "release": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["url", "sha256"],
-      "properties": {
-        "url": {
-          "type": "string",
-          "format": "uri",
-          "pattern": "^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/releases/download/[^/]+/[^/]+\\.tgz$"
+    "tarball": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/releases/(download/[^/?#]+|latest/download)/[^/?#]+\\.(tgz|tar\\.gz)$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "allOf": [
+        {
+          "pattern": "\\S"
         },
-        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
-      }
+        {
+          "not": {
+            "pattern": "[\\u0000-\\u001f\\u007f-\\u009f\\u2028\\u2029]"
+          }
+        }
+      ]
     }
   }
 }

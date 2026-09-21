@@ -1,14 +1,10 @@
 name: Catalog candidate
-
 on:
   pull_request:
-    paths:
-      - data/workbenches/**
-
+    branches: [main]
 permissions: {}
-
 jobs:
   queue-trusted-gate:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "候选变更将由 workflow_run 中的 main 分支受信任代码检查"
+      - run: echo "候选变更由 main 分支可信代码检查"
