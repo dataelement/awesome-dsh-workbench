@@ -11,8 +11,9 @@ test('minimal example is the production protocol, with no duplicated runtime or 
   const record = await readEntry(fixture, await createValidator())
   const example = await readEntry(path.join(ROOT, 'examples/workbench.yml'), await createValidator(), { example: true })
   assert.deepEqual(record, example)
-  assert.deepEqual(Object.keys(record.entry), ['url', 'category', 'description', 'screenshots'])
+  assert.deepEqual(Object.keys(record.entry), ['url', 'name', 'category', 'description', 'screenshots'])
   const catalog = generateCatalog([record], [])
+  assert.equal(catalog.workbenches[0].name, record.entry.name)
   assert.equal(catalog.workbenches[0].id, 'owner/repo')
   assert.deepEqual(catalog.workbenches[0].description, record.entry.description)
   assert.equal(catalog.workbenches[0].distribution, undefined) // Only a successful probe chooses an install target.
@@ -21,7 +22,7 @@ test('minimal example is the production protocol, with no duplicated runtime or 
 test('rejects redundant author fields', async () => {
   const validate = await createValidator()
   const { entry } = await readEntry(fixture, validate)
-  for (const key of ['id', 'workbenchId', 'schemaVersion', 'version', 'source', 'author', 'verification', 'requirements', 'npm', 'name', 'release']) {
+  for (const key of ['id', 'workbenchId', 'schemaVersion', 'version', 'source', 'author', 'verification', 'requirements', 'npm', 'release']) {
     assert.equal(validate({ ...entry, [key]: 'not-author-settable' }), false, key)
   }
 })
@@ -90,4 +91,13 @@ test('screenshots use absolute URLs hosted in the source repository', async () =
   for (const value of ['docs/image.png', 'http://raw.githubusercontent.com/owner/repo/main/image.png', 'https://example.com/owner/repo/main/image.png', 'https://raw.githubusercontent.com/other/repo/main/image.png', 'https://raw.githubusercontent.com/owner/repo/main/%2e%2e/image.png', raw + '?token=secret', 'https://github.com/owner/repo/tree/main/docs/image.png']) {
     assert.throws(() => screenshotUrl(value, 'owner', 'repo'))
   }
+})
+
+test('requires a nonempty single-line market display name', async () => {
+  const validate = await createValidator()
+  const { entry } = await readEntry(fixture, validate)
+  for (const name of [undefined, null, 42, '', '   ', 'First\nSecond', 'Trailing\n']) {
+    assert.equal(validate({ ...entry, name }), false)
+  }
+  assert.equal(validate({ ...entry, name: '项目助手 Project Assistant' }), true)
 })

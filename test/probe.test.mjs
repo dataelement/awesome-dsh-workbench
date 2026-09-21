@@ -12,7 +12,7 @@ import { generateCatalog } from '../scripts/catalog-lib.mjs'
 
 const manifest = { schemaVersion: 1, id: 'sample-workbench', title: 'Sample', description: 'Sample', version: '2.0.0', entry: './client.js', compatibility: { desktopWorkbenches: '^1.0.0', harness: '^1.0.0' }, capabilities: [] }
 const pkg = { name: '@owner/workbench', version: manifest.version, repository: 'https://github.com/owner/repo.git', dsh: { client: { inject: ['dsh-desktop-workbenches'] }, bundle: { patch: './cordis.patch.yml' } } }
-const record = (tarball) => ({ owner: 'owner', repository: 'repo', entry: { url: 'https://github.com/owner/repo', category: 'other', description: { zh: '帮助整理项目资料、跟进任务并生成工作报告。', en: 'Organize project materials, track tasks, and generate work reports.' }, screenshots: ['https://raw.githubusercontent.com/owner/repo/main/main.png'], ...(tarball ? { tarball } : {}) } })
+const record = (tarball) => ({ owner: 'owner', repository: 'repo', entry: { url: 'https://github.com/owner/repo', name: '项目助手', category: 'other', description: { zh: '帮助整理项目资料、跟进任务并生成工作报告。', en: 'Organize project materials, track tasks, and generate work reports.' }, screenshots: ['https://raw.githubusercontent.com/owner/repo/main/main.png'], ...(tarball ? { tarball } : {}) } })
 const json = (body) => new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json' } })
 const releaseUrl = 'https://github.com/owner/repo/releases/download/v1.2.3/workbench.tgz'
 const npmUrl = 'https://registry.npmjs.org/@owner/workbench/-/workbench-1.2.3.tgz'
@@ -141,16 +141,16 @@ test('an explicitly selected broken tarball does not silently switch to source',
   assert.ok(!mock.calls.some((url) => url.endsWith('/client.js')))
 })
 
-test('refreshes the repository name without overwriting either curated description', async () => {
+test('preserves the curated market name and descriptions when repository metadata changes', async () => {
   const first = await probeEntry(record(), fixture())
-  assert.equal(first.name, 'repo')
+  assert.equal(first.name, '项目助手')
   assert.deepEqual(first.description, record().entry.description)
   const updated = await probeEntry(record(), fixture({ repo: { name: 'Repository display', description: 'Updated About' } }))
-  assert.equal(updated.name, 'Repository display')
+  assert.equal(updated.name, '项目助手')
   assert.deepEqual(updated.description, record().entry.description)
-  assert.equal(updated.screenshots[0].alt, 'Repository display 截图 1')
+  assert.equal(updated.screenshots[0].alt, '项目助手 截图 1')
   const empty = await probeEntry(record(), fixture({ repo: { name: null, description: '  ' } }))
-  assert.equal(empty.name, 'repo')
+  assert.equal(empty.name, '项目助手')
   assert.deepEqual(empty.description, record().entry.description)
 })
 

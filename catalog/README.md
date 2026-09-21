@@ -8,6 +8,7 @@
 
 ```yaml
 url: https://github.com/owner/repo
+name: 项目助手
 category: productivity
 description:
   zh: 帮助整理项目资料、跟进任务并生成工作报告。
@@ -22,12 +23,13 @@ screenshots:
 | 字段 | 要求 |
 | --- | --- |
 | `url` | GitHub 仓库主页，与文件名一致 |
+| `name` | 必填，市场展示名称，非空单行字符串 |
 | `category` | [七个分类](../data/categories.json)之一 |
 | `description.zh` / `description.en` | 中英文均必填、非空单行；不接受未支持的语言键，不限制为恰好一句或固定字数 |
 | `screenshots` | 1–5 个源仓库托管的完整 HTTPS 图片地址，第一张为封面 |
 | `tarball` | 可选，同仓库 GitHub Release 的 `.tgz` / `.tar.gz` URL，不是安装命令 |
 
-[完整 example](../examples/workbench.yml)直接使用正式 [Schema](../schema/workbench.schema.json)校验。不要填名称、作者 ID、版本、源码 commit、npm 包名、校验值、验证记录或权限表。这些分别来自 GitHub、工作台包、自动探测及 PR 审核材料。输入 YAML 没有独立 `schemaVersion`，输出目录保留机器协议版本。
+[完整 example](../examples/workbench.yml)直接使用正式 [Schema](../schema/workbench.schema.json)校验。不要填作者 ID、版本、源码 commit、npm 包名、校验值、验证记录或权限表。这些分别来自 GitHub、工作台包、自动探测及 PR 审核材料。输入 YAML 没有独立 `schemaVersion`，输出目录保留机器协议版本。
 
 ## 安装来源：npm → Release → 源码
 
@@ -39,12 +41,12 @@ screenshots:
 
 ## 自动获得的展示信息
 
-- 名称：GitHub `repo.name`，离线预览临时使用 URL 中的仓库名。
+- 名称：作者填写的 `name`，用于市场列表页展示；非空单行字符串，不被仓库名或包名覆盖。
 - 简介由 YAML 的 `description.zh` 和 `description.en` 提供，离线预览和在线目录均保留两种语言，不使用 GitHub About 或 manifest 覆盖。
 - 仓库身份、作者归属和许可证：GitHub 仓库元数据。
 - 包名、版本、运行时 ID、兼容性、安装地址和校验值：源码与选中发布包。
 
-这些信息随定期探测刷新。修改 GitHub About、发布新包或更新原路径图片都不需要目录 PR。分类、双语介绍和截图顺序属于市场编排，无法可靠地从 repo 元数据获取，因此保留在 YAML。
+这些信息随定期探测刷新。修改 GitHub About、发布新包或更新原路径图片都不需要目录 PR。名称、分类、双语介绍和截图顺序属于市场编排，无法可靠地从 repo 元数据获取，因此保留在 YAML。
 
 源码默认分支可能比正式 npm/Release 版本更新，因此不要求二者版本相同。包自身的 manifest/package 版本必须一致，工作台 ID 应保持稳定并与源码声明一致。目录唯一键是仓库；运行时 ID 是从包读取的宿主标识，宿主安装时仍需处理运行时 ID 冲突。
 
@@ -59,7 +61,7 @@ screenshots:
 - 建议横向 16:9、宽度至少 1280px；比例不是硬门槛，展示端等比适配。
 - 必须是真实产品画面，拥有素材使用权，不含凭据、个人信息或客户数据。图片应与用户可安装的版本相符，由作者维护、人工抽查。
 
-修改图片内容或发布版本无需目录 PR；双语介绍、图片地址、顺序、分类、仓库地址或 tarball 选择改变时更新 YAML。
+修改图片内容或发布版本无需目录 PR；名称、双语介绍、图片地址、顺序、分类、仓库地址或 tarball 选择改变时更新 YAML。
 
 ## 包与宿主
 

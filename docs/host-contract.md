@@ -12,7 +12,7 @@
 
 ## 与开发中指南的差异
 
-本目录沿用“首次收录、后续作者自行发版”的流程，安装采用 npm → Release → 源码优先级。市场截图声明集中到目录 YAML，宿主自身图片字段不作为市场回退来源。宿主投稿材料应使用含 url、category、description（zh/en）、screenshots 及可选 tarball 的 example；消费者必须使用生成目录中的精确包版本/下载地址/校验值或源码 commit，不能在安装时重新解析 latest。
+本目录沿用“首次收录、后续作者自行发版”的流程，安装采用 npm → Release → 源码优先级。市场截图声明集中到目录 YAML，宿主自身图片字段不作为市场回退来源。宿主投稿材料应使用含 url、name、category、description（zh/en）、screenshots 及可选 tarball 的 example；消费者必须使用生成目录中的精确包版本/下载地址/校验值或源码 commit，不能在安装时重新解析 latest。
 
 v1 保留一个仓库一个根目录工作台的限制。monorepo 留待消费者协议明确后扩展；生成目录的 npm 安装来源仍需 Desktop 客户端联调验收。
 

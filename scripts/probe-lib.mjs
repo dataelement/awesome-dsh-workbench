@@ -162,7 +162,7 @@ export async function probeEntry(record, { fetchImpl = fetch } = {}) {
   const manifest = await fetchJsonFile(fetchImpl, owner, repository, commit.sha, 'workbench.json')
   const pkg = await fetchJsonFile(fetchImpl, owner, repository, commit.sha, 'package.json')
   validateManifest(manifest, pkg)
-  const name = typeof repo.name === 'string' && repo.name.trim() ? repo.name.trim() : repository
+  const name = entry.name
   const distribution = await resolveDistribution(fetchImpl, entry, owner, repository, commit.sha, manifest, pkg)
   const screenshots = []
   for (const [index, image] of entry.screenshots.entries()) {

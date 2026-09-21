@@ -108,7 +108,7 @@ export function generateCatalog(records, categories) {
         owner,
         repository,
         url: entry.url.replace(/\/$/, ''),
-        name: repository,
+        name: entry.name,
         description: entry.description,
         screenshots: entry.screenshots,
         category: entry.category
