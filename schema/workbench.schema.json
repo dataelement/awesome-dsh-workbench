@@ -49,17 +49,38 @@
       "properties": {
         "zh": {
           "type": "string",
-          "minLength": 10,
-          "maxLength": 200,
-          "pattern": "\\S"
+          "minLength": 1,
+          "allOf": [
+            {
+              "pattern": "\\S"
+            },
+            {
+              "not": {
+                "pattern": "[\\u0000-\\u001f\\u007f-\\u009f\\u2028\\u2029]"
+              }
+            }
+          ]
         },
         "en": {
           "type": "string",
-          "minLength": 10,
-          "maxLength": 200,
-          "pattern": "\\S"
+          "minLength": 1,
+          "allOf": [
+            {
+              "pattern": "\\S"
+            },
+            {
+              "not": {
+                "pattern": "[\\u0000-\\u001f\\u007f-\\u009f\\u2028\\u2029]"
+              }
+            }
+          ]
         }
       }
+    },
+    "tarball": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/releases/(download/[^/?#]+|latest/download)/[^/?#]+\\.(tgz|tar\\.gz)$"
     }
   }
 }

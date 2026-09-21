@@ -7,10 +7,12 @@ import test from 'node:test'
 import * as tar from 'tar'
 import sharp from 'sharp'
 import { probeEntry, ProbeError } from '../scripts/probe-lib.mjs'
+import { buildPublishedCatalog, validatePublishedCatalog } from '../scripts/published-catalog.mjs'
+import { generateCatalog } from '../scripts/catalog-lib.mjs'
 
 const manifest = { schemaVersion: 1, id: 'sample-workbench', title: 'Sample', description: 'Sample', version: '2.0.0', entry: './client.js', compatibility: { desktopWorkbenches: '^1.0.0', harness: '^1.0.0' }, capabilities: [] }
 const pkg = { name: '@owner/workbench', version: manifest.version, repository: 'https://github.com/owner/repo.git', dsh: { client: { inject: ['dsh-desktop-workbenches'] }, bundle: { patch: './cordis.patch.yml' } } }
-const record = () => ({ owner: 'owner', repository: 'repo', entry: { url: 'https://github.com/owner/repo', category: 'other', description: { zh: '帮助整理项目资料、跟进任务并生成工作报告。', en: 'Organize project materials, track tasks, and generate work reports.' }, screenshots: ['main.png'] } })
+const record = (tarball) => ({ owner: 'owner', repository: 'repo', entry: { url: 'https://github.com/owner/repo', category: 'other', description: { zh: '帮助整理项目资料、跟进任务并生成工作报告。', en: 'Organize project materials, track tasks, and generate work reports.' }, screenshots: ['main.png'], ...(tarball ? { tarball } : {}) } })
 const json = (body) => new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json' } })
 const releaseUrl = 'https://github.com/owner/repo/releases/download/v1.2.3/workbench.tgz'
 const npmUrl = 'https://registry.npmjs.org/@owner/workbench/-/workbench-1.2.3.tgz'
@@ -54,7 +56,7 @@ function fixture({ bytes, npm = false, repo = {}, packageValue = pkg, manifestVa
 test('npm wins over Release and source; selects the published version, not the development version', async () => {
   const bytes = await archive()
   const mock = fixture({ bytes, npm: true })
-  const result = await probeEntry(record(), mock)
+  const result = await probeEntry(record(releaseUrl), mock)
   assert.equal(result.distribution.type, 'npm')
   assert.equal(result.version, '1.2.3')
   assert.equal(result.distribution.name, pkg.name)
@@ -65,7 +67,7 @@ test('npm wins over Release and source; selects the published version, not the d
 
 test('falls back to Release when npm is absent, resolving latest to a fixed asset and generated checksum', async () => {
   const bytes = await archive()
-  const result = await probeEntry(record(), fixture({ bytes }))
+  const result = await probeEntry(record(releaseUrl), fixture({ bytes }))
   assert.equal(result.distribution.type, 'github-release')
   assert.equal(result.distribution.url, releaseUrl)
   assert.equal(result.distribution.sha256, digest(bytes))
@@ -84,7 +86,7 @@ test('falls back to pinned source when neither npm nor Release is available', as
 
 test('npm ownership mismatch falls back instead of linking an unrelated package', async () => {
   const bytes = await archive()
-  const result = await probeEntry(record(), fixture({ bytes, npm: true, npmRepository: 'https://github.com/other/repo' }))
+  const result = await probeEntry(record(releaseUrl), fixture({ bytes, npm: true, npmRepository: 'https://github.com/other/repo' }))
   assert.equal(result.distribution.type, 'github-release')
   const mock = fixture({ packageValue: { ...pkg, repository: 'https://github.com/other/repo' } })
   assert.equal((await probeEntry(record(), mock)).distribution.type, 'github-source')
@@ -94,21 +96,21 @@ test('npm ownership mismatch falls back instead of linking an unrelated package'
 test('selected npm integrity failure blocks publication, without silent fallback', async () => {
   const bytes = await archive()
   const mock = fixture({ bytes, npm: true })
-  await assert.rejects(() => probeEntry(record(), { fetchImpl: (url) => url === npmUrl ? new Response('corrupt') : mock.fetchImpl(url) }), /完整性/)
+  await assert.rejects(() => probeEntry(record(releaseUrl), { fetchImpl: (url) => url === npmUrl ? new Response('corrupt') : mock.fetchImpl(url) }), /完整性/)
   assert.ok(!mock.calls.includes(releaseUrl))
 })
 
 test('rejects package identity mismatch and oversized Release', async () => {
   const bytes = await archive({ id: 'other-workbench' })
-  await assert.rejects(() => probeEntry(record(), fixture({ bytes })), /来源不一致/)
+  await assert.rejects(() => probeEntry(record(releaseUrl), fixture({ bytes })), /来源不一致/)
   const mock = fixture({ releaseAssets: [{ name: 'workbench.tgz', browser_download_url: releaseUrl }] })
-  await assert.rejects(() => probeEntry(record(), { fetchImpl: (url) => url === releaseUrl ? new Response('x', { headers: { 'content-length': String(8 * 1024 * 1024 + 1) } }) : mock.fetchImpl(url) }), (error) => error.code === 'release-invalid' && !error.incomplete)
+  await assert.rejects(() => probeEntry(record(releaseUrl), { fetchImpl: (url) => url === releaseUrl ? new Response('x', { headers: { 'content-length': String(8 * 1024 * 1024 + 1) } }) : mock.fetchImpl(url) }), (error) => error.code === 'release-invalid' && !error.incomplete)
 })
 
 test('network failure is incomplete, not evidence that npm is absent', async () => {
   for (const status of [403, 429, 503]) {
     const mock = fixture()
-    await assert.rejects(() => probeEntry(record(), { fetchImpl: (url) => url.startsWith('https://registry.npmjs.org') ? new Response('', { status }) : mock.fetchImpl(url) }), (error) => error instanceof ProbeError && error.incomplete)
+    await assert.rejects(() => probeEntry(record(releaseUrl), { fetchImpl: (url) => url.startsWith('https://registry.npmjs.org') ? new Response('', { status }) : mock.fetchImpl(url) }), (error) => error instanceof ProbeError && error.incomplete)
     assert.ok(!mock.calls.includes(releaseUrl))
   }
 })
@@ -133,9 +135,9 @@ test('redirected repository aliases cannot create a second catalog identity', as
   await assert.rejects(() => probeEntry(record(), fixture({ repo: { full_name: 'new-owner/new-name' } })), /旧地址/)
 })
 
-test('a discovered but broken Release does not silently switch to source', async () => {
+test('an explicitly selected broken tarball does not silently switch to source', async () => {
   const mock = fixture({ releaseAssets: [{ name: 'workbench.tgz', browser_download_url: releaseUrl }] })
-  await assert.rejects(() => probeEntry(record(), { fetchImpl: (url) => url === releaseUrl ? new Response('', { status: 404 }) : mock.fetchImpl(url) }), /下载失败/)
+  await assert.rejects(() => probeEntry(record(releaseUrl), { fetchImpl: (url) => url === releaseUrl ? new Response('', { status: 404 }) : mock.fetchImpl(url) }), /下载失败/)
   assert.ok(!mock.calls.some((url) => url.endsWith('/client.js')))
 })
 
@@ -152,24 +154,48 @@ test('refreshes the repository name without overwriting either curated descripti
   assert.deepEqual(empty.description, record().entry.description)
 })
 
-test('automatically discovers a unique tgz, or prefers workbench.tgz among multiple assets', async () => {
+
+test('resolves only the named tarball asset rather than selecting by tgz count or convention', async () => {
   const bytes = await archive()
-  for (const releaseAssets of [
-    [{ name: 'my-workbench-1.2.3.tgz', browser_download_url: releaseUrl }],
-    [{ name: 'extra.tgz', browser_download_url: 'https://example.com/wrong.tgz' }, { name: 'workbench.tgz', browser_download_url: releaseUrl }]
-  ]) {
-    const result = await probeEntry(record(), fixture({ bytes, releaseAssets }))
-    assert.equal(result.distribution.url, releaseUrl)
+  const tarball = 'https://github.com/owner/repo/releases/latest/download/custom.tgz'
+  const releaseAssets = [
+    { name: 'workbench.tgz', browser_download_url: 'https://example.com/not-selected.tgz' },
+    { name: 'custom.tgz', browser_download_url: releaseUrl }
+  ]
+  const result = await probeEntry(record(tarball), fixture({ bytes, releaseAssets }))
+  assert.equal(result.distribution.url, releaseUrl)
+  await assert.rejects(() => probeEntry(record(tarball), fixture({ releaseAssets: [{ name: 'other.tgz' }] })), /指定/)
+})
+
+test('no tarball means source fallback even if the repository has release assets', async () => {
+  const mock = fixture({ releaseAssets: [{ name: 'one.tgz' }, { name: 'two.tgz' }] })
+  const result = await probeEntry(record(), mock)
+  assert.equal(result.distribution.type, 'github-source')
+  assert.ok(!mock.calls.some((url) => url.endsWith('/releases/latest')))
+})
+
+test('Release service failure cannot be treated as no available tarball', async () => {
+  const mock = fixture()
+  await assert.rejects(() => probeEntry(record('https://github.com/owner/repo/releases/latest/download/workbench.tgz'), { fetchImpl: (url) => url.endsWith('/releases/latest') ? new Response('', { status: 503 }) : mock.fetchImpl(url) }), (error) => error.incomplete)
+})
+
+test('published contract accepts every actual installation variant and rejects drift', async () => {
+  const bytes = await archive()
+  for (const [candidate, mock] of [[record(), fixture()], [record(releaseUrl), fixture({ bytes })], [record(releaseUrl), fixture({ bytes, npm: true })]]) {
+    const generated = await probeEntry(candidate, mock)
+    const catalog = await buildPublishedCatalog([{ record: candidate, generated }], [])
+    assert.equal(catalog.kind, 'catalog')
+    assert.deepEqual(catalog.workbenches[0].description, candidate.entry.description)
+    const invalid = structuredClone(catalog)
+    invalid.workbenches[0].version = '9.9.9'
+    await assert.rejects(() => validatePublishedCatalog(invalid), /版本/)
+    delete invalid.workbenches[0].distribution
+    await assert.rejects(() => validatePublishedCatalog(invalid), /协议/)
   }
 })
 
-test('empty Releases fall back to source, while ambiguous assets block selection', async () => {
-  const result = await probeEntry(record(), fixture({ releaseAssets: [{ name: 'README.txt' }] }))
-  assert.equal(result.distribution.type, 'github-source')
-  await assert.rejects(() => probeEntry(record(), fixture({ releaseAssets: [{ name: 'one.tgz' }, { name: 'two.tgz' }] })), /多个/)
-})
-
-test('Release service failure cannot be treated as no available Release', async () => {
-  const mock = fixture()
-  await assert.rejects(() => probeEntry(record(), { fetchImpl: (url) => url.endsWith('/releases/latest') ? new Response('', { status: 503 }) : mock.fetchImpl(url) }), (error) => error.incomplete)
+test('an empty offline preview still cannot be published', async () => {
+  await assert.rejects(() => validatePublishedCatalog(generateCatalog([], [])), /协议/)
+  await assert.rejects(() => buildPublishedCatalog([{ record: record(), error: { status: 'incomplete' } }], []), /未完成/)
+  assert.equal((await buildPublishedCatalog([], [])).kind, 'catalog')
 })

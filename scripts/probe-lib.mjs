@@ -122,20 +122,19 @@ async function resolveDistribution(fetchImpl, entry, owner, repository, commit, 
       }
     }
   }
-  const response = await fetchImpl(`https://api.github.com/repos/${owner}/${repository}/releases/latest`)
-  if (response.status !== 404) {
-    const release = await responseJson(response, 'GitHub Release')
-    if (!Array.isArray(release.assets) || release.draft || release.prerelease) throw new ProbeError('release-invalid', '最新正式 Release 元数据无效')
-    const packages = release.assets.filter((asset) => typeof asset.name === 'string' && asset.name.endsWith('.tgz'))
-    const preferred = packages.filter((asset) => asset.name === 'workbench.tgz')
-    const candidates = preferred.length ? preferred : packages
-    if (candidates.length > 1) throw new ProbeError('release-ambiguous', '多个 .tgz 无法确定工作台包，请发布唯一 .tgz 或命名为 workbench.tgz')
-    if (candidates.length === 1) {
-      const url = candidates[0].browser_download_url
-      const parsed = new URL(url)
-      if (parsed.origin !== 'https://github.com' || parsed.username || parsed.password || !parsed.pathname.toLowerCase().startsWith(`/${owner}/${repository}/releases/download/`.toLowerCase()) || parsed.search || parsed.hash) throw new ProbeError('release-invalid', 'Release 必须解析为同仓库的固定版本资源')
-      return { type: 'github-release', url, ...await inspectPackage(fetchImpl, url, { expectedId: manifest.id }) }
+  if (entry.tarball) {
+    let url = entry.tarball
+    if (url.includes('/releases/latest/download/')) {
+      const requested = decodeURIComponent(new URL(url).pathname.split('/').at(-1))
+      const release = await responseJson(await fetchImpl(`https://api.github.com/repos/${owner}/${repository}/releases/latest`), 'GitHub Release')
+      if (!Array.isArray(release.assets) || release.draft || release.prerelease) throw new ProbeError('release-invalid', '最新正式 Release 元数据无效')
+      const candidates = release.assets.filter((asset) => asset.name === requested)
+      if (candidates.length !== 1) throw new ProbeError('release-unavailable', '最新正式 Release 未找到 tarball 指定的唯一资源')
+      url = candidates[0].browser_download_url
     }
+    const parsed = new URL(url)
+    if (parsed.origin !== 'https://github.com' || parsed.username || parsed.password || !parsed.pathname.toLowerCase().startsWith(`/${owner}/${repository}/releases/download/`.toLowerCase()) || parsed.search || parsed.hash) throw new ProbeError('release-invalid', 'tarball 必须解析为同仓库的固定版本资源')
+    return { type: 'github-release', url, ...await inspectPackage(fetchImpl, url, { expectedId: manifest.id }) }
   }
   for (const file of [pkg.dsh.bundle.patch, manifest.entry]) {
     const response = await fetchImpl(sourceFileUrl(owner, repository, commit, file))

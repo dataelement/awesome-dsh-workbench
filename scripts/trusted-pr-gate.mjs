@@ -7,6 +7,7 @@ import { createValidator, readEntry, loadEntries, DATA_DIR } from './catalog-lib
 import { probeEntry, ProbeError } from './probe-lib.mjs'
 import { readBounded } from './media-lib.mjs'
 import { classifyChanges } from './pr-policy.mjs'
+import { buildPublishedCatalog } from './published-catalog.mjs'
 
 export async function runGate({ env = process.env, fetchImpl = fetch, dataDir = DATA_DIR } = {}) {
   const { GITHUB_TOKEN: token, REPOSITORY: repository, CANDIDATE_SHA: sha } = env
@@ -57,10 +58,11 @@ export async function runGate({ env = process.env, fetchImpl = fetch, dataDir = 
       await fs.cp(dataDir, path.join(directory, 'catalog'), { recursive: true })
       await fs.copyFile(file, path.join(directory, 'catalog', path.basename(file)))
       await loadEntries({ directory: path.join(directory, 'catalog') })
-      await probeEntry(record, { fetchImpl: (url, options = {}) => fetchImpl(url, {
+      const generated = await probeEntry(record, { fetchImpl: (url, options = {}) => fetchImpl(url, {
         ...options,
         headers: url.startsWith('https://api.github.com/') ? { ...options.headers, Authorization: `Bearer ${token}` } : options.headers
       }) })
+      await buildPublishedCatalog([{ record, generated }], [])
       const fresh = await api(`/pulls/${pull.number}`)
       if (fresh.head.sha !== sha) throw new Error('PR 已更新，请等待最新提交的检查')
       await report('success', '仓库、截图和三级安装来源检查通过；仍需维护者核对 PR 实测记录。')

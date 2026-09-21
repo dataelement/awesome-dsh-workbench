@@ -18,7 +18,7 @@
 | --- | --- |
 | Catalog CI | 所有 PR 和 main push：离线 Schema/example、测试、确定性生成、投稿范围 |
 | Catalog candidate → Trusted catalog PR gate | PR 触发无密钥排队，可信 main 脚本通过 API 读取固定 head；旧 head 不为新提交写成功结果，fork PR 不依赖可能为空的 event.pull_requests |
-| Build catalog artifact | main push / 手动：完整探测，生成 artifact；启用发布变量后部署 Pages |
+| Build catalog artifact | main push / 手动：完整探测及发布 JSON Schema 校验，生成 artifact；启用发布变量后部署 Pages |
 | 同一构建的每日 schedule | 重新解析 npm → Release → 源码并检查截图，全部成功后产出 artifact；启用发布后自动刷新目录 |
 
 维护者订阅该仓库 Actions 失败通知。定期更新的失败在运行记录中可见；目前不自动给作者发消息，也不自动下架。处理时区分网络/限流与确定性失效，确认后通过 PR 修复或下架。

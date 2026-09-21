@@ -1,5 +1,7 @@
 # 工作台目录协议
 
+设计依据及与 Awesome DSH Plugin 的差异见[对照说明](../docs/catalog-design.md)。
+
 一个 GitHub 仓库对应一个工作台条目，文件名为 `data/workbenches/<owner>__<repo>.yml`。仓库地址就是目录身份，不另外申请 ID；重命名或转移后应更新到当前主页，旧重定向地址不能重复收录。
 
 ## YAML 只保留目录编排信息
@@ -13,24 +15,27 @@ description:
 screenshots:
   - docs/images/overview.webp
   - docs/images/result.png
+# 可选：明确选择预构建安装包；npm 仍优先。
+# tarball: https://github.com/owner/repo/releases/latest/download/custom-workbench.tgz
 ```
 
 | 字段 | 要求 |
 | --- | --- |
 | `url` | GitHub 仓库主页，与文件名一致 |
 | `category` | [七个分类](../data/categories.json)之一 |
-| `description.zh` / `description.en` | 中英文介绍均必填，各 10–200 字符，不接受空白字符串 |
+| `description.zh` / `description.en` | 中英文均必填、非空单行；不接受未支持的语言键，不限制为恰好一句或固定字数 |
 | `screenshots` | 1–5 个仓库内图片路径，第一张为封面 |
+| `tarball` | 可选，同仓库 GitHub Release 的 `.tgz` / `.tar.gz` URL，不是安装命令 |
 
-[完整 example](../examples/workbench.yml)直接使用正式 [Schema](../schema/workbench.schema.json)校验。不要填名称、Release URL、作者 ID、版本、源码 commit、npm 包名、校验值、验证记录或权限表。这些分别来自 GitHub、工作台包、自动探测及 PR 审核材料。输入 YAML 没有独立 `schemaVersion`，输出目录保留机器协议版本。
+[完整 example](../examples/workbench.yml)直接使用正式 [Schema](../schema/workbench.schema.json)校验。不要填名称、作者 ID、版本、源码 commit、npm 包名、校验值、验证记录或权限表。这些分别来自 GitHub、工作台包、自动探测及 PR 审核材料。输入 YAML 没有独立 `schemaVersion`，输出目录保留机器协议版本。
 
 ## 安装来源：npm → Release → 源码
 
 1. **npm**：从源码 `package.json.name` 发现包名。源码与 npm 最新发布版本的 `repository` 都指回该 GitHub 仓库才采用；下载包，校验 registry 的 SHA-512 integrity、包名、版本、工作台 ID 和可安装文件。输出精确版本、固定下载地址及 SHA-256，客户端不能重新解析 latest。
-2. **Release**：无可用 npm 映射时，读取 GitHub 最新正式 Release。优先选择名为 `workbench.tgz` 的资源，否则使用唯一的 `.tgz`；多个 `.tgz` 无法明确选择时停止并提示作者规范资源命名。下载地址由 GitHub 返回并限定为同仓库的固定 tag，下载后检查包并生成 SHA-256，安装版本读取实际包。预发布版本不自动选入。
-3. **源码**：仓库没有正式 Release，或最新正式 Release 没有 `.tgz` 时，解析默认分支为完整 commit，检查实际入口与 bundle patch，输出固定 commit。客户端使用这次解析结果，不重新解析分支。
+2. **Release**：无可用 npm 映射时，使用作者可选填写的 `tarball`。支持固定 tag 或 `latest/download/<作者指定的资源名>`；后者解析为指定资源的固定 tag 下载地址。检查实际包并计算校验值，不按附件数量或文件名惯例猜测安装包。
+3. **源码**：无可用 npm 映射且未声明 tarball 时，使用仓库默认分支解析出的完整 commit，检查实际入口及 bundle patch。仓库中存在 Release 不会隐式改变此选择。
 
-只有“未发布 npm 包 / npm 归属不符 / 没有 Release 安装包”才进入下一层。限流、超时、已选安装包损坏或已发现的 Release 资源失效会阻止本次发布，不能悄悄换来源掩盖故障。
+已声明 tarball 缺失或校验失败、npm/网络暂不可验证时，停止本次候选发布并保留上一线上目录；不静默改用另一个安装源。作者可通过 PR 修正或删除 tarball。逐条缓存/降级暂未实现，与参考项目的差异见设计说明。
 
 ## 自动获得的展示信息
 
@@ -53,7 +58,7 @@ screenshots:
 - 建议横向 16:9、宽度至少 1280px；比例不是硬门槛，展示端等比适配。
 - 必须是真实产品画面，拥有素材使用权，不含凭据、个人信息或客户数据。图片应与用户可安装的版本相符，由作者维护、人工抽查。
 
-修改图片内容或发布版本无需目录 PR；双语介绍、图片路径、顺序、分类或仓库地址改变时更新 YAML。
+修改图片内容或发布版本无需目录 PR；双语介绍、图片路径、顺序、分类、仓库地址或 tarball 选择改变时更新 YAML。
 
 ## 包与宿主
 
@@ -61,6 +66,19 @@ v1 只支持仓库根目录的一个工作台，暂不支持 monorepo 子目录�
 
 ## 生成产物
 
-`npm run generate` 生成离线展示预览，不声明安装来源已验证。`npm run probe` 解析安装优先级并校验，输出 `distribution`、实际版本、源码 commit、运行时 ID、图片 URL/校验值及探测状态。不要把这些生成字段抄回 YAML。
+`npm run generate` 生成 `kind: preview` 的离线展示预览，不能作为安装目录发布。`npm run probe` 解析安装优先级并校验，生成 `kind: catalog`，输出 `distribution`、实际版本、源码 commit、运行时 ID、图片 URL/校验值及探测状态。不要把这些生成字段抄回 YAML。
 
 `dist/` 不提交；全部探测通过后才生成发布候选。首次收录经过人工审核，后续发版由作者负责并自动探测；这不意味着每个后续版本经过人工审核或安全审计。
+
+
+正式 JSON 由 [catalog.schema.json](../schema/catalog.schema.json)校验，版本为 `schemaVersion: 1`：
+
+| 安装类型 `distribution.type` | 消费者必须读取的目标 |
+| --- | --- |
+| `npm` | `name`、精确 `version`、`url`、`integrity` 与 `sha256` |
+| `github-release` | 固定 `url`、`version`、`sha256` |
+| `github-source` | 仓库 `url` 与完整 `commit` |
+
+三种类型都包含实际版本与兼容范围；消费者按 type 分支处理，不能从描述或命令字符串反推安装目标，不能遇到损坏包后悄悄换来源。顶层条目版本必须与选中安装版本一致，仓库身份、源码 commit 和截图 URL 有跨字段校验。未知字段及非成功探测结果不能进入正式输出。候选探测阶段和正式发布前都执行同一输出校验。
+
+投稿和机器输出是两个契约，前者不携带版本字段；后者变更不兼容结构时必须升级 schemaVersion，并说明消费者迁移。

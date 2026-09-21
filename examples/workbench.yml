@@ -6,3 +6,5 @@ description:
   en: Organize project materials, track tasks, and generate work reports.
 screenshots:
   - docs/images/overview.webp
+# 仅当需要指定预构建安装包时填写；不是命令，npm 仍然优先。
+# tarball: https://github.com/owner/repo/releases/latest/download/my-workbench.tgz

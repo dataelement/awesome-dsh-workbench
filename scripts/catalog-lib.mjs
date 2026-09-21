@@ -61,6 +61,12 @@ export async function readEntry(file, validate, { example = false } = {}) {
   for (const image of entry.screenshots) {
     if (!safeRelativePath(image) || !/\.(png|jpe?g|webp)$/i.test(image)) throw new Error(`${relative} 的截图必须是安全的相对 PNG/JPEG/WebP 路径`)
   }
+  if (entry.tarball) {
+    const asset = new URL(entry.tarball)
+    if (asset.href !== entry.tarball || asset.username || asset.password || asset.search || asset.hash || !asset.pathname.toLowerCase().startsWith(`/${owner}/${repository}/releases/`.toLowerCase())) {
+      throw new Error(`${relative} 的 tarball 必须指向同仓库的 GitHub Release 资源`)
+    }
+  }
   return { entry, owner, repository }
 }
 
@@ -83,6 +89,7 @@ export async function loadEntries({ directory = DATA_DIR } = {}) {
 export function generateCatalog(records, categories) {
   return {
     schemaVersion: 1,
+    kind: 'preview',
     categories,
     workbenches: records
       .map(({ entry, owner, repository }) => ({

@@ -61,7 +61,24 @@ test('requires both description locales and rejects blanks, extra locales, and l
   for (const description of [
     undefined, 'legacy description', { zh: entry.description.zh }, { en: entry.description.en },
     { ...entry.description, en: ' '.repeat(20) }, { ...entry.description, zh: '' },
-    { ...entry.description, en: 'x'.repeat(201) }, { ...entry.description, fr: 'extra language' }
+    { ...entry.description, en: 'First line\nSecond line' }, { ...entry.description, en: 'Trailing newline\n' }, { ...entry.description, fr: 'extra language' }
   ]) assert.equal(validate({ ...entry, description }), false)
+  assert.equal(validate({ ...entry, description: { zh: '简短说明', en: 'Short summary.' } }), true)
   assert.equal(validate(entry), true)
+})
+
+test('tarball is optional, explicit, and restricted to the submitted repository', async (t) => {
+  const validate = await createValidator()
+  const { entry } = await readEntry(fixture, validate)
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'dsh-tarball-'))
+  t.after(() => fs.rm(directory, { recursive: true, force: true }))
+  const file = path.join(directory, 'owner__repo.yml')
+  for (const target of ['download/v1.0.0/custom.tgz', 'latest/download/custom.tar.gz']) {
+    await fs.writeFile(file, JSON.stringify({ ...entry, tarball: `https://github.com/owner/repo/releases/${target}` }))
+    await readEntry(file, validate)
+  }
+  for (const tarball of ['https://github.com/other/repo/releases/download/v1/a.tgz', 'https://example.com/a.tgz', 'https://github.com/owner/repo/releases/download/../a.tgz', 'npm install something']) {
+    await fs.writeFile(file, JSON.stringify({ ...entry, tarball }))
+    await assert.rejects(() => readEntry(file, validate))
+  }
 })

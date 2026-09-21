@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { generateCatalog, loadEntries, ROOT } from './catalog-lib.mjs'
+import { loadEntries, ROOT } from './catalog-lib.mjs'
 import { probeAll } from './probe-lib.mjs'
+import { buildPublishedCatalog } from './published-catalog.mjs'
 
 const records = await loadEntries()
 const token = process.env.GITHUB_TOKEN
@@ -19,11 +20,7 @@ if (failed.length) {
   process.exit(1)
 }
 const categories = JSON.parse(await fs.readFile(path.join(ROOT, 'data/categories.json'), 'utf8'))
-const catalog = generateCatalog(records, categories)
-for (const item of catalog.workbenches) {
-  const result = results.find(({ record }) => `${record.owner}/${record.repository}`.toLowerCase() === item.id)
-  Object.assign(item, result.generated)
-}
+const catalog = await buildPublishedCatalog(results, categories)
 await fs.mkdir(path.join(ROOT, 'dist'), { recursive: true })
 await fs.writeFile(path.join(ROOT, 'dist/catalog.json'), `${JSON.stringify(catalog, null, 2)}\n`)
 console.log(`完整探测并生成 ${records.length} 个工作台`)
