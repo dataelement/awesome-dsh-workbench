@@ -16,10 +16,8 @@ GitHub 仓库地址确定条目唯一性，安装优先选择 npm，其次使用
 
 ## 规范入口
 
-- [协议设计与参考项目对照](docs/catalog-design.md)
 - [目录字段与图片标准](catalog/README.md)
-- [维护者审核清单](docs/review-checklist.md)
-- [宿主契约来源及现有限制](docs/host-contract.md)
+- [投稿与维护者审核](CONTRIBUTING.md)
 - [发布、巡检和回滚](docs/operations.md)
 
 目录 YAML 是市场元数据协议，不是宿主运行时 manifest；不能直接导入 Desktop 充当工作台包。收录不等于安全审计，也不代表所有平台已经验证。

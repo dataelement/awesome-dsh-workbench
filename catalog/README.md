@@ -1,7 +1,5 @@
 # 工作台目录协议
 
-设计依据及与 Awesome DSH Plugin 的差异见[对照说明](../docs/catalog-design.md)。
-
 一个 GitHub 仓库对应一个工作台条目，文件名为 `data/workbenches/<owner>__<repo>.yml`。仓库地址就是目录身份，不另外申请 ID；重命名或转移后应更新到当前主页，旧重定向地址不能重复收录。
 
 ## YAML 只保留目录编排信息
@@ -37,9 +35,9 @@ screenshots:
 2. **Release**：无可用 npm 映射时，使用作者可选填写的 `tarball`。支持固定 tag 或 `latest/download/<作者指定的资源名>`；后者解析为指定资源的固定 tag 下载地址。检查实际包并计算校验值，不按附件数量或文件名惯例猜测安装包。
 3. **源码**：无可用 npm 映射且未声明 tarball 时，使用仓库默认分支解析出的完整 commit，检查实际入口及 bundle patch。仓库中存在 Release 不会隐式改变此选择。
 
-已声明 tarball 缺失或校验失败、npm/网络暂不可验证时，停止本次候选发布并保留上一线上目录；不静默改用另一个安装源。作者可通过 PR 修正或删除 tarball。逐条缓存/降级暂未实现，与参考项目的差异见设计说明。
+已声明 tarball 缺失或校验失败、npm/网络暂不可验证时，停止本次候选发布并保留上一线上目录；不静默改用另一个安装源。作者可通过 PR 修正或删除 tarball。暂不支持逐条缓存或降级。
 
-## 自动获得的展示信息
+## 信息来源
 
 - 名称：作者填写的 `name`，用于市场列表页展示；非空单行字符串，不被仓库名或包名覆盖。
 - 简介由 YAML 的 `description.zh` 和 `description.en` 提供，离线预览和在线目录均保留两种语言，不使用 GitHub About 或 manifest 覆盖。
@@ -65,7 +63,9 @@ screenshots:
 
 ## 包与宿主
 
-v1 只支持仓库根目录的一个工作台，暂不支持 monorepo 子目录。实际包需满足[宿主契约](../docs/host-contract.md)：manifest v1、版本一致、安全入口、`dsh.bundle.patch` 及客户端注入。包不超过 8 MiB，解包不执行代码，拒绝越界和链接，限制解压体积与文件数。源码安装要求入口已存在，目录构建不替作者编译。
+v1 只支持仓库根目录的一个工作台，暂不支持 monorepo 子目录。实际包需满足宿主格式：manifest v1、版本一致、安全入口、`dsh.bundle.patch` 及客户端注入。包不超过 8 MiB，解包不执行代码，拒绝越界和链接，限制解压体积与文件数。源码安装要求入口已存在，目录构建不替作者编译。
+
+校验器的宿主格式依据固定于 Desktop commit `9d04845dfe6b66f9df3a5e0b401b9a8e1f1d45f9` 的[包校验脚本](https://github.com/dataelement/dsh-desktop/blob/9d04845dfe6b66f9df3a5e0b401b9a8e1f1d45f9/scripts/check-workbench-package.mjs)；开发方式可参考该版本的[作者指南](https://github.com/dataelement/dsh-desktop/blob/9d04845dfe6b66f9df3a5e0b401b9a8e1f1d45f9/packages/dsh-desktop-workbenches/development-guide.zh.md)。此依据不代表所有 Desktop 发布版本兼容，投稿仍需记录实际验证的宿主版本；目录消费者接入和安装需独立验收。
 
 ## 生成产物
 

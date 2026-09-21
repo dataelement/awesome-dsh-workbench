@@ -2,10 +2,10 @@
 
 ## 首次启用
 
-这份 PR 交付工作流，不自动修改仓库设置，也不宣称 Desktop 已接入线上目录。首次合并后完成：
+仓库管理员在启用目录发布时完成以下配置：
 
 1. 在 main 配置分支保护或 ruleset：必须通过 PR；至少一名维护者批准；新提交撤销旧审批；要求分支更新至最新 main。启用 `validate`（Catalog CI）和 `Trusted catalog probe` 必需检查，尽可能将检查来源限制为 GitHub Actions；禁止强推和删除 main。
-2. 等这些检查在新工作流上真实运行后再设为 required，避免首次引入工作流的 PR 被旧 main 的门禁卡住。当前 PR 使用旧 main 的可信脚本，维护类 PR 可能仍被旧的“只改一份 YAML”限制拒绝；检查详情并人工确认首次迁移，不能伪造新门禁已通过。
+2. 等检查在工作流上实际运行后，再将对应检查设为 required。
 3. 若需要公开目录，设置 GitHub Pages 来源为 GitHub Actions，配置 `github-pages` 环境审批/分支规则，再将仓库变量 `PUBLISH_CATALOG` 设为 `true`。未设置时仅产生 artifact。
 4. 手动运行 Build catalog artifact，核对 Pages 返回地址下的 `catalog.json`、`catalog.sha256`、`publication.json`。三者必须对应同一次部署。
 5. Desktop 消费者接入地址、协议和安装方式需单独验收，不能把 Pages 可访问当作客户端可安装。
@@ -17,7 +17,7 @@
 | 工作流 | 触发及作用 |
 | --- | --- |
 | Catalog CI | 所有 PR 和 main push：离线 Schema/example、测试、确定性生成、投稿范围 |
-| Catalog candidate → Trusted catalog PR gate | PR 触发无密钥排队，可信 main 脚本通过 API 读取固定 head；旧 head 不为新提交写成功结果，fork PR 不依赖可能为空的 event.pull_requests |
+| Catalog candidate → Trusted catalog PR gate | PR 触发无密钥排队，可信 main 脚本通过 API 读取固定 head，检查投稿来源并回写结果 |
 | Build catalog artifact | main push / 手动：完整探测及发布 JSON Schema 校验，生成 artifact；启用发布变量后部署 Pages |
 | 同一构建的每日 schedule | 重新解析 npm → Release → 源码并检查截图，全部成功后产出 artifact；启用发布后自动刷新目录 |
 
