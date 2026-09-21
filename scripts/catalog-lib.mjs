@@ -61,12 +61,6 @@ export async function readEntry(file, validate, { example = false } = {}) {
   for (const image of entry.screenshots) {
     if (!safeRelativePath(image) || !/\.(png|jpe?g|webp)$/i.test(image)) throw new Error(`${relative} 的截图必须是安全的相对 PNG/JPEG/WebP 路径`)
   }
-  if (entry.release) {
-    const release = new URL(entry.release)
-    if (!release.pathname.toLowerCase().startsWith(`/${owner}/${repository}/releases/`.toLowerCase())) {
-      throw new Error(`${relative} 的 release 必须属于同一个 GitHub 仓库`)
-    }
-  }
   return { entry, owner, repository }
 }
 
@@ -96,10 +90,9 @@ export function generateCatalog(records, categories) {
         owner,
         repository,
         url: entry.url.replace(/\/$/, ''),
-        name: entry.name,
+        name: repository,
         screenshots: entry.screenshots,
-        category: entry.category,
-        description: entry.description
+        category: entry.category
       }))
       .sort((a, b) => a.id.localeCompare(b.id, 'en'))
   }

@@ -11,7 +11,7 @@ test('minimal example is the production protocol, with no duplicated runtime or 
   const record = await readEntry(fixture, await createValidator())
   const example = await readEntry(path.join(ROOT, 'examples/workbench.yml'), await createValidator(), { example: true })
   assert.deepEqual(record, example)
-  assert.deepEqual(Object.keys(record.entry), ['url', 'name', 'category', 'description', 'screenshots'])
+  assert.deepEqual(Object.keys(record.entry), ['url', 'category', 'screenshots'])
   const catalog = generateCatalog([record], [])
   assert.equal(catalog.workbenches[0].id, 'owner/repo')
   assert.equal(catalog.workbenches[0].distribution, undefined) // Only a successful probe chooses an install target.
@@ -20,7 +20,7 @@ test('minimal example is the production protocol, with no duplicated runtime or 
 test('rejects redundant author fields', async () => {
   const validate = await createValidator()
   const { entry } = await readEntry(fixture, validate)
-  for (const key of ['id', 'workbenchId', 'schemaVersion', 'version', 'source', 'author', 'verification', 'requirements', 'npm']) {
+  for (const key of ['id', 'workbenchId', 'schemaVersion', 'version', 'source', 'author', 'verification', 'requirements', 'npm', 'name', 'description', 'release']) {
     assert.equal(validate({ ...entry, [key]: 'not-author-settable' }), false, key)
   }
 })
@@ -32,20 +32,6 @@ test('filename must match the repository', async (t) => {
   await fs.copyFile(fixture, file)
   const validate = await createValidator()
   await assert.rejects(() => readEntry(file, validate), /文件名/)
-})
-
-test('accepts fixed or latest Release links but rejects a different repository', async (t) => {
-  const validate = await createValidator()
-  const { entry } = await readEntry(fixture, validate)
-  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'dsh-release-'))
-  t.after(() => fs.rm(directory, { recursive: true, force: true }))
-  const file = path.join(directory, 'owner__repo.yml')
-  for (const suffix of ['download/v1.2.3/workbench.tgz', 'latest/download/workbench.tgz']) {
-    await fs.writeFile(file, JSON.stringify({ ...entry, release: `https://github.com/owner/repo/releases/${suffix}` }))
-    await readEntry(file, validate)
-  }
-  await fs.writeFile(file, JSON.stringify({ ...entry, release: 'https://github.com/other/repo/releases/download/v1.2.3/workbench.tgz' }))
-  await assert.rejects(() => readEntry(file, validate), /同一个/)
 })
 
 test('rejects unsafe, duplicate and oversized screenshot lists', async (t) => {

@@ -122,18 +122,20 @@ async function resolveDistribution(fetchImpl, entry, owner, repository, commit, 
       }
     }
   }
-  if (entry.release) {
-    let url = entry.release
-    if (url.includes('/releases/latest/download/')) {
-      const name = decodeURIComponent(new URL(url).pathname.split('/').at(-1))
-      const release = await responseJson(await fetchImpl(`https://api.github.com/repos/${owner}/${repository}/releases/latest`), 'GitHub Release')
-      const asset = release.assets?.find((item) => item.name === name)
-      if (!asset) throw new ProbeError('release-unavailable', '最新 Release 缺少指定安装包')
-      url = asset.browser_download_url
+  const response = await fetchImpl(`https://api.github.com/repos/${owner}/${repository}/releases/latest`)
+  if (response.status !== 404) {
+    const release = await responseJson(response, 'GitHub Release')
+    if (!Array.isArray(release.assets) || release.draft || release.prerelease) throw new ProbeError('release-invalid', '最新正式 Release 元数据无效')
+    const packages = release.assets.filter((asset) => typeof asset.name === 'string' && asset.name.endsWith('.tgz'))
+    const preferred = packages.filter((asset) => asset.name === 'workbench.tgz')
+    const candidates = preferred.length ? preferred : packages
+    if (candidates.length > 1) throw new ProbeError('release-ambiguous', '多个 .tgz 无法确定工作台包，请发布唯一 .tgz 或命名为 workbench.tgz')
+    if (candidates.length === 1) {
+      const url = candidates[0].browser_download_url
+      const parsed = new URL(url)
+      if (parsed.origin !== 'https://github.com' || parsed.username || parsed.password || !parsed.pathname.toLowerCase().startsWith(`/${owner}/${repository}/releases/download/`.toLowerCase()) || parsed.search || parsed.hash) throw new ProbeError('release-invalid', 'Release 必须解析为同仓库的固定版本资源')
+      return { type: 'github-release', url, ...await inspectPackage(fetchImpl, url, { expectedId: manifest.id }) }
     }
-    const parsed = new URL(url)
-    if (parsed.origin !== 'https://github.com' || parsed.username || parsed.password || !parsed.pathname.toLowerCase().startsWith(`/${owner}/${repository}/releases/download/`.toLowerCase()) || parsed.search || parsed.hash) throw new ProbeError('release-invalid', 'Release 必须解析为同仓库的固定版本资源')
-    return { type: 'github-release', url, ...await inspectPackage(fetchImpl, url, { expectedId: manifest.id }) }
   }
   for (const file of [pkg.dsh.bundle.patch, manifest.entry]) {
     const response = await fetchImpl(sourceFileUrl(owner, repository, commit, file))
@@ -161,6 +163,8 @@ export async function probeEntry(record, { fetchImpl = fetch } = {}) {
   const manifest = await fetchJsonFile(fetchImpl, owner, repository, commit.sha, 'workbench.json')
   const pkg = await fetchJsonFile(fetchImpl, owner, repository, commit.sha, 'package.json')
   validateManifest(manifest, pkg)
+  const name = typeof repo.name === 'string' && repo.name.trim() ? repo.name.trim() : repository
+  const description = typeof repo.description === 'string' && repo.description.trim() ? repo.description.trim() : manifest.description.trim()
   const distribution = await resolveDistribution(fetchImpl, entry, owner, repository, commit.sha, manifest, pkg)
   const screenshots = []
   for (const [index, image] of entry.screenshots.entries()) {
@@ -171,10 +175,12 @@ export async function probeEntry(record, { fetchImpl = fetch } = {}) {
     try {
       const bytes = await readBounded(response, MAX_IMAGE_BYTES, image)
       const dimensions = await inspectImage(bytes, image)
-      screenshots.push({ url, alt: `${entry.name} 截图 ${index + 1}`, ...dimensions, sha256: crypto.createHash('sha256').update(bytes).digest('hex') })
+      screenshots.push({ url, alt: `${name} 截图 ${index + 1}`, ...dimensions, sha256: crypto.createHash('sha256').update(bytes).digest('hex') })
     } catch (error) { throw new ProbeError('invalid-image', `${image}: ${error.message}`) }
   }
   return {
+    name,
+    description,
     workbenchId: manifest.id,
     version: distribution.version,
     distribution,

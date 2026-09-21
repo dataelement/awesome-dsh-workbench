@@ -10,7 +10,7 @@ import { probeEntry, ProbeError } from '../scripts/probe-lib.mjs'
 
 const manifest = { schemaVersion: 1, id: 'sample-workbench', title: 'Sample', description: 'Sample', version: '2.0.0', entry: './client.js', compatibility: { desktopWorkbenches: '^1.0.0', harness: '^1.0.0' }, capabilities: [] }
 const pkg = { name: '@owner/workbench', version: manifest.version, repository: 'https://github.com/owner/repo.git', dsh: { client: { inject: ['dsh-desktop-workbenches'] }, bundle: { patch: './cordis.patch.yml' } } }
-const record = (release) => ({ owner: 'owner', repository: 'repo', entry: { url: 'https://github.com/owner/repo', name: 'Sample', category: 'other', description: '这是一个长度足够的工作台说明。', screenshots: ['main.png'], ...(release ? { release } : {}) } })
+const record = () => ({ owner: 'owner', repository: 'repo', entry: { url: 'https://github.com/owner/repo', category: 'other', screenshots: ['main.png'] } })
 const json = (body) => new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json' } })
 const releaseUrl = 'https://github.com/owner/repo/releases/download/v1.2.3/workbench.tgz'
 const npmUrl = 'https://registry.npmjs.org/@owner/workbench/-/workbench-1.2.3.tgz'
@@ -31,11 +31,11 @@ async function archive({ version = '1.2.3', id = manifest.id } = {}) {
   } finally { await fs.rm(directory, { recursive: true, force: true }) }
 }
 
-function fixture({ bytes, npm = false, repo = {}, packageValue = pkg, manifestValue = manifest, npmRepository = pkg.repository } = {}) {
+function fixture({ bytes, npm = false, repo = {}, packageValue = pkg, manifestValue = manifest, npmRepository = pkg.repository, releaseAssets } = {}) {
   const calls = []
   const fetchImpl = async (url) => {
     calls.push(url)
-    if (url === 'https://api.github.com/repos/owner/repo') return json({ full_name: 'owner/repo', private: false, archived: false, default_branch: 'main', license: { spdx_id: 'MIT' }, ...repo })
+    if (url === 'https://api.github.com/repos/owner/repo') return json({ full_name: 'owner/repo', name: 'repo', description: 'GitHub About description', private: false, archived: false, default_branch: 'main', license: { spdx_id: 'MIT' }, ...repo })
     if (url.endsWith('/commits/main')) return json({ sha: 'a'.repeat(40) })
     if (url.endsWith('/workbench.json')) return json(manifestValue)
     if (url.endsWith('/package.json')) return json(packageValue)
@@ -44,7 +44,7 @@ function fixture({ bytes, npm = false, repo = {}, packageValue = pkg, manifestVa
     if (url === 'https://registry.npmjs.org/%40owner%2Fworkbench/latest') return npm
       ? json({ name: pkg.name, version: '1.2.3', repository: npmRepository, dist: { tarball: npmUrl, integrity: `sha512-${digest(bytes, 'sha512', 'base64')}` } })
       : new Response('', { status: 404 })
-    if (url.endsWith('/releases/latest')) return json({ assets: [{ name: 'workbench.tgz', browser_download_url: releaseUrl }] })
+    if (url.endsWith('/releases/latest')) return bytes || releaseAssets ? json({ assets: releaseAssets || [{ name: 'workbench.tgz', browser_download_url: releaseUrl }] }) : new Response('', { status: 404 })
     if (url === releaseUrl || url === npmUrl) return new Response(bytes)
     throw new Error(`Unexpected URL: ${url}`)
   }
@@ -54,7 +54,7 @@ function fixture({ bytes, npm = false, repo = {}, packageValue = pkg, manifestVa
 test('npm wins over Release and source; selects the published version, not the development version', async () => {
   const bytes = await archive()
   const mock = fixture({ bytes, npm: true })
-  const result = await probeEntry(record(releaseUrl), mock)
+  const result = await probeEntry(record(), mock)
   assert.equal(result.distribution.type, 'npm')
   assert.equal(result.version, '1.2.3')
   assert.equal(result.distribution.name, pkg.name)
@@ -65,7 +65,7 @@ test('npm wins over Release and source; selects the published version, not the d
 
 test('falls back to Release when npm is absent, resolving latest to a fixed asset and generated checksum', async () => {
   const bytes = await archive()
-  const result = await probeEntry(record('https://github.com/owner/repo/releases/latest/download/workbench.tgz'), fixture({ bytes }))
+  const result = await probeEntry(record(), fixture({ bytes }))
   assert.equal(result.distribution.type, 'github-release')
   assert.equal(result.distribution.url, releaseUrl)
   assert.equal(result.distribution.sha256, digest(bytes))
@@ -84,7 +84,7 @@ test('falls back to pinned source when neither npm nor Release is available', as
 
 test('npm ownership mismatch falls back instead of linking an unrelated package', async () => {
   const bytes = await archive()
-  const result = await probeEntry(record(releaseUrl), fixture({ bytes, npm: true, npmRepository: 'https://github.com/other/repo' }))
+  const result = await probeEntry(record(), fixture({ bytes, npm: true, npmRepository: 'https://github.com/other/repo' }))
   assert.equal(result.distribution.type, 'github-release')
   const mock = fixture({ packageValue: { ...pkg, repository: 'https://github.com/other/repo' } })
   assert.equal((await probeEntry(record(), mock)).distribution.type, 'github-source')
@@ -94,21 +94,21 @@ test('npm ownership mismatch falls back instead of linking an unrelated package'
 test('selected npm integrity failure blocks publication, without silent fallback', async () => {
   const bytes = await archive()
   const mock = fixture({ bytes, npm: true })
-  await assert.rejects(() => probeEntry(record(releaseUrl), { fetchImpl: (url) => url === npmUrl ? new Response('corrupt') : mock.fetchImpl(url) }), /完整性/)
+  await assert.rejects(() => probeEntry(record(), { fetchImpl: (url) => url === npmUrl ? new Response('corrupt') : mock.fetchImpl(url) }), /完整性/)
   assert.ok(!mock.calls.includes(releaseUrl))
 })
 
 test('rejects package identity mismatch and oversized Release', async () => {
   const bytes = await archive({ id: 'other-workbench' })
-  await assert.rejects(() => probeEntry(record(releaseUrl), fixture({ bytes })), /来源不一致/)
-  const mock = fixture()
-  await assert.rejects(() => probeEntry(record(releaseUrl), { fetchImpl: (url) => url === releaseUrl ? new Response('x', { headers: { 'content-length': String(8 * 1024 * 1024 + 1) } }) : mock.fetchImpl(url) }), (error) => error.code === 'release-invalid' && !error.incomplete)
+  await assert.rejects(() => probeEntry(record(), fixture({ bytes })), /来源不一致/)
+  const mock = fixture({ releaseAssets: [{ name: 'workbench.tgz', browser_download_url: releaseUrl }] })
+  await assert.rejects(() => probeEntry(record(), { fetchImpl: (url) => url === releaseUrl ? new Response('x', { headers: { 'content-length': String(8 * 1024 * 1024 + 1) } }) : mock.fetchImpl(url) }), (error) => error.code === 'release-invalid' && !error.incomplete)
 })
 
 test('network failure is incomplete, not evidence that npm is absent', async () => {
   for (const status of [403, 429, 503]) {
     const mock = fixture()
-    await assert.rejects(() => probeEntry(record(releaseUrl), { fetchImpl: (url) => url.startsWith('https://registry.npmjs.org') ? new Response('', { status }) : mock.fetchImpl(url) }), (error) => error instanceof ProbeError && error.incomplete)
+    await assert.rejects(() => probeEntry(record(), { fetchImpl: (url) => url.startsWith('https://registry.npmjs.org') ? new Response('', { status }) : mock.fetchImpl(url) }), (error) => error instanceof ProbeError && error.incomplete)
     assert.ok(!mock.calls.includes(releaseUrl))
   }
 })
@@ -133,8 +133,43 @@ test('redirected repository aliases cannot create a second catalog identity', as
   await assert.rejects(() => probeEntry(record(), fixture({ repo: { full_name: 'new-owner/new-name' } })), /旧地址/)
 })
 
-test('a missing configured Release does not silently switch to source', async () => {
-  const mock = fixture()
-  await assert.rejects(() => probeEntry(record(releaseUrl), { fetchImpl: (url) => url === releaseUrl ? new Response('', { status: 404 }) : mock.fetchImpl(url) }), /下载失败/)
+test('a discovered but broken Release does not silently switch to source', async () => {
+  const mock = fixture({ releaseAssets: [{ name: 'workbench.tgz', browser_download_url: releaseUrl }] })
+  await assert.rejects(() => probeEntry(record(), { fetchImpl: (url) => url === releaseUrl ? new Response('', { status: 404 }) : mock.fetchImpl(url) }), /下载失败/)
   assert.ok(!mock.calls.some((url) => url.endsWith('/client.js')))
+})
+
+test('derives display metadata from GitHub and refreshes it without YAML changes', async () => {
+  const first = await probeEntry(record(), fixture())
+  assert.equal(first.name, 'repo')
+  assert.equal(first.description, 'GitHub About description')
+  const updated = await probeEntry(record(), fixture({ repo: { name: 'Repository display', description: 'Updated About' } }))
+  assert.equal(updated.name, 'Repository display')
+  assert.equal(updated.description, 'Updated About')
+  assert.equal(updated.screenshots[0].alt, 'Repository display 截图 1')
+  const empty = await probeEntry(record(), fixture({ repo: { name: null, description: '  ' } }))
+  assert.equal(empty.name, 'repo')
+  assert.equal(empty.description, manifest.description)
+})
+
+test('automatically discovers a unique tgz, or prefers workbench.tgz among multiple assets', async () => {
+  const bytes = await archive()
+  for (const releaseAssets of [
+    [{ name: 'my-workbench-1.2.3.tgz', browser_download_url: releaseUrl }],
+    [{ name: 'extra.tgz', browser_download_url: 'https://example.com/wrong.tgz' }, { name: 'workbench.tgz', browser_download_url: releaseUrl }]
+  ]) {
+    const result = await probeEntry(record(), fixture({ bytes, releaseAssets }))
+    assert.equal(result.distribution.url, releaseUrl)
+  }
+})
+
+test('empty Releases fall back to source, while ambiguous assets block selection', async () => {
+  const result = await probeEntry(record(), fixture({ releaseAssets: [{ name: 'README.txt' }] }))
+  assert.equal(result.distribution.type, 'github-source')
+  await assert.rejects(() => probeEntry(record(), fixture({ releaseAssets: [{ name: 'one.tgz' }, { name: 'two.tgz' }] })), /多个/)
+})
+
+test('Release service failure cannot be treated as no available Release', async () => {
+  const mock = fixture()
+  await assert.rejects(() => probeEntry(record(), { fetchImpl: (url) => url.endsWith('/releases/latest') ? new Response('', { status: 503 }) : mock.fetchImpl(url) }), (error) => error.incomplete)
 })

@@ -2,38 +2,40 @@
 
 一个 GitHub 仓库对应一个工作台条目，文件名为 `data/workbenches/<owner>__<repo>.yml`。仓库地址就是目录身份，不另外申请 ID；重命名或转移后应更新到当前主页，旧重定向地址不能重复收录。
 
-## 作者只填写展示信息
+## YAML 只保留目录编排信息
 
 ```yaml
 url: https://github.com/owner/repo
-name: 示例工作台
 category: productivity
-description: 帮助整理项目资料、跟进任务并生成工作报告。
 screenshots:
   - docs/images/overview.webp
   - docs/images/result.png
-# 可选：没有可用 npm 包时采用此 Release。
-# release: https://github.com/owner/repo/releases/latest/download/workbench.tgz
 ```
 
 | 字段 | 要求 |
 | --- | --- |
 | `url` | GitHub 仓库主页，与文件名一致 |
-| `name` | 展示名称，1–60 字符 |
 | `category` | [七个分类](../data/categories.json)之一 |
-| `description` | 一句话中文介绍，10–200 字符 |
 | `screenshots` | 1–5 个仓库内图片路径，第一张为封面 |
-| `release` | 可选，同仓库 `.tgz` Release 链接，支持固定 tag 或 `latest/download/固定文件名` |
 
-[完整 example](../examples/workbench.yml)直接使用正式 [Schema](../schema/workbench.schema.json)校验。不要填作者 ID、版本、源码 commit、npm 包名、校验值、验证记录或权限表。这些分别来自 GitHub、工作台包、自动探测及 PR 审核材料。输入 YAML 没有独立 `schemaVersion`，输出目录保留机器协议版本。
+[完整 example](../examples/workbench.yml)直接使用正式 [Schema](../schema/workbench.schema.json)校验。不要填名称、简介、Release URL、作者 ID、版本、源码 commit、npm 包名、校验值、验证记录或权限表。这些分别来自 GitHub、工作台包、自动探测及 PR 审核材料。输入 YAML 没有独立 `schemaVersion`，输出目录保留机器协议版本。
 
 ## 安装来源：npm → Release → 源码
 
 1. **npm**：从源码 `package.json.name` 发现包名。源码与 npm 最新发布版本的 `repository` 都指回该 GitHub 仓库才采用；下载包，校验 registry 的 SHA-512 integrity、包名、版本、工作台 ID 和可安装文件。输出精确版本、固定下载地址及 SHA-256，客户端不能重新解析 latest。
-2. **Release**：无可用 npm 映射时，采用 YAML 中的 `release`。`latest/download` 先通过 GitHub API 解析为固定 tag 的同名资源，再下载、检查包并生成 SHA-256；安装版本读取实际包。未填写就继续使用源码，不猜测多个 Release 资源中哪个可安装。
-3. **源码**：无 npm 映射且未声明 Release 时，解析默认分支为完整 commit，检查实际入口与 bundle patch，输出固定 commit。客户端使用这次解析结果，不重新解析分支。
+2. **Release**：无可用 npm 映射时，读取 GitHub 最新正式 Release。优先选择名为 `workbench.tgz` 的资源，否则使用唯一的 `.tgz`；多个 `.tgz` 无法明确选择时停止并提示作者规范资源命名。下载地址由 GitHub 返回并限定为同仓库的固定 tag，下载后检查包并生成 SHA-256，安装版本读取实际包。预发布版本不自动选入。
+3. **源码**：仓库没有正式 Release，或最新正式 Release 没有 `.tgz` 时，解析默认分支为完整 commit，检查实际入口与 bundle patch，输出固定 commit。客户端使用这次解析结果，不重新解析分支。
 
-只有“未发布 npm 包 / npm 归属不符 / 没有声明 Release”才进入下一层。限流、超时、已选安装包损坏或配置的 Release 失效会阻止本次发布，不能悄悄换来源掩盖故障。
+只有“未发布 npm 包 / npm 归属不符 / 没有 Release 安装包”才进入下一层。限流、超时、已选安装包损坏或已发现的 Release 资源失效会阻止本次发布，不能悄悄换来源掩盖故障。
+
+## 自动获得的展示信息
+
+- 名称：GitHub `repo.name`，离线预览临时使用 URL 中的仓库名。
+- 简介：GitHub About（`repo.description`）；未填写时回退到源码 `workbench.json.description`。离线预览不伪造简介。
+- 仓库身份、作者归属和许可证：GitHub 仓库元数据。
+- 包名、版本、运行时 ID、兼容性、安装地址和校验值：源码与选中发布包。
+
+这些信息随定期探测刷新。修改 GitHub About、发布新包或更新原路径图片都不需要目录 PR。分类是市场分类，截图列表控制选择和顺序，不能可靠地从 repo 元数据推断，因此仍留在 YAML。
 
 源码默认分支可能比正式 npm/Release 版本更新，因此不要求二者版本相同。包自身的 manifest/package 版本必须一致，工作台 ID 应保持稳定并与源码声明一致。目录唯一键是仓库；运行时 ID 是从包读取的宿主标识，宿主安装时仍需处理运行时 ID 冲突。
 
@@ -47,7 +49,7 @@ screenshots:
 - 建议横向 16:9、宽度至少 1280px；比例不是硬门槛，展示端等比适配。
 - 必须是真实产品画面，拥有素材使用权，不含凭据、个人信息或客户数据。图片应与用户可安装的版本相符，由作者维护、人工抽查。
 
-修改图片内容或发布版本无需目录 PR；修改图片路径、顺序、名称、分类、简介、仓库或固定 Release 链接时更新 YAML。
+修改图片内容或发布版本无需目录 PR；只有图片路径、顺序、分类或仓库地址改变时更新 YAML。
 
 ## 包与宿主
 

@@ -1,9 +1,5 @@
-# 结构示例；替换仓库、说明和图片路径后投稿。
+# 结构示例；替换仓库和图片路径后投稿。
 url: https://github.com/owner/repo
-name: 示例工作台
 category: productivity
-description: 用来验证目录工具的示例工作台，不代表市场已收录。
 screenshots:
   - docs/images/overview.webp
-# 可选：npm 不可用时使用此包；未填写则回退源码。
-# release: https://github.com/owner/repo/releases/latest/download/workbench.tgz

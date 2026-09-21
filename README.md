@@ -12,7 +12,7 @@ DSH Desktop 工作台目录：作者通过 Pull Request 提交工作台 YAML，�
 4. 执行 `npm ci --ignore-scripts && npm run check`，提交一个工作台的 PR。
 5. 通过自动检查和维护者审核，合并并成功发布后，才算进入公开目录。
 
-GitHub 仓库地址确定条目唯一性，安装优先选择 npm，其次使用声明的 Release，最后回退源码。版本、commit 和校验值由构建解析；作者正常发版无需逐版本提交目录 PR。
+GitHub 仓库地址确定条目唯一性，安装优先选择 npm，其次自动发现最新正式 Release，最后回退源码。版本、commit 和校验值由构建解析；作者正常发版无需逐版本提交目录 PR。
 
 ## 规范入口
 

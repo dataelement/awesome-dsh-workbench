@@ -3,8 +3,8 @@
 ## 首次收录
 
 1. 按目标 Desktop 的真实工作台接口开发，在本机安装、打开并验证。源码、许可证、图片、使用说明和安装包保留在自己的公开仓库。
-2. 复制 [example](examples/workbench.yml)，填写名称、仓库、分类、一句话介绍与截图路径，保存为 `data/workbenches/<owner>__<repo>.yml`。
-3. 无需手填 ID、版本、commit、npm 包名或校验值。目录使用 GitHub 仓库身份，自动按 **npm → Release → 源码** 选择安装来源。若希望提供 Release 回退，只需填写同仓库的 `.tgz` 链接。
+2. 复制 [example](examples/workbench.yml)，只填写仓库、分类与截图路径，保存为 `data/workbenches/<owner>__<repo>.yml`。
+3. 无需手填 ID、版本、commit、npm 包名或校验值。目录使用 GitHub 仓库身份，自动按 **npm → Release → 源码** 选择安装来源。名称、简介从 GitHub 获取，Release 自动发现；不再填写这些字段。
 4. 执行 `npm ci --ignore-scripts && npm run check`。本地检查验证格式、example、测试和离线生成；远程来源与图片由可信 CI 实际检查。
 5. 提交 PR，只新增或修改这一份 YAML；实测环境、安装与卸载步骤、权限、服务费用、授权和已知限制写在 PR 描述及作者 README，不塞进目录协议。
 6. 自动检查通过、维护者完成首次审核、合并并成功发布后，才报告已收录。目录 artifact 不等于 Desktop 已接入在线市场。
@@ -14,9 +14,9 @@
 ## 后续维护
 
 - 作者自行测试并发布 npm 新版本，目录定期解析 npm `latest`，无需每次目录 PR。
-- Release 使用 `latest/download/固定文件名` 时自动解析新版本；固定 tag 或文件名变化时修改 YAML。
+- Release 自动读取最新正式版本，建议工作台包统一命名 `workbench.tgz`；否则必须只有一个 `.tgz`。
 - 源码更新及原路径图片内容更新自动发现，目录每次生成都固定当次 commit 和安装包校验值。
-- 展示信息、仓库地址或图片路径/顺序改变时，提交 YAML 更新 PR。
+- 仓库名与 About 更新自动同步；只有分类、仓库地址或图片路径/顺序改变时，提交 YAML 更新 PR。
 - 后续自动探测不是逐版本人工验收。权限、费用、使用限制及变更说明需在作者仓库保持最新。
 
 ## PR 范围
