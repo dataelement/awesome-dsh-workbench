@@ -1,0 +1,10 @@
+url: https://github.com/dataelement/dsh-ming-life
+name: 玄学人生工作台
+category: other
+description:
+  zh: 本地排演八字、紫微斗数、六爻、梅花易数与黄历，由 DSH 基于盘面事实和规则信号生成并写回解读。
+  en: Compute BaZi, Zi Wei Dou Shu, Liu Yao, Mei Hua Yi Shu, and almanac charts locally, with DSH generating and saving interpretations from chart facts and rule-based signals.
+screenshots:
+  - https://raw.githubusercontent.com/dataelement/dsh-ming-life/main/docs/screenshots/reveal.png
+  - https://raw.githubusercontent.com/dataelement/dsh-ming-life/main/docs/screenshots/who.png
+  - https://raw.githubusercontent.com/dataelement/dsh-ming-life/main/docs/screenshots/ask.png
