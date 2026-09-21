@@ -1,0 +1,23 @@
+name: Catalog checks
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Check PR scope
+        run: node scripts/validate-pr.mjs "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}"
+      - run: npm run check

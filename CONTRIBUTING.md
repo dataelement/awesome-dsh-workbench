@@ -1,48 +1,39 @@
-# 投稿指南（准备稿）
+# 工作台市场投稿指南
 
-DSH Desktop 工作台市场的提交流程。当前为准备稿：没有自动审核、在线发布或邮箱校验服务。
+投稿前，请先按 [DSH Desktop 工作台开发指南](https://dshdesktop.com/workbench/skills/workbench-development/SKILL.md) 在本机安装、打开并验证工作台。源码和发布包继续由作者维护。
 
-权威的产品规范是 [DSH Desktop 工作台开发指南](https://dshdesktop.com/workbench/skills/workbench-development/SKILL.md)，本文档与之对齐，规范不移动。
+## 第一次投稿
 
-## 流程
+1. Fork 本仓库并创建分支。
+2. 复制 `examples/workbench.yml` 到 `data/workbenches/<GitHub owner>__<仓库名>.yml`。
+3. 填写真实内容。文件中的 `url` 必须和文件名指向同一个公开 GitHub 仓库。
+4. 运行 `npm ci && npm run generate && npm run check`，一并提交生成的 `dist/catalog.json`。
+5. 发起 Pull Request。投稿 PR 只能新增或修改这一份 YAML 和生成目录，方便审核范围保持清楚。
 
-工作台作者在 DSH Desktop 内点「制作我的工作台」，按三步进行：
+例如 `https://github.com/acme/data-helper` 对应 `data/workbenches/acme__data-helper.yml`。
 
-1. 阅读规范，把开发指令交给自己的 Agent。
-2. Agent 把工作台装到当前设备，用户确认它出现在「我的工作台」和左侧入口，并实际打开。
-3. 想投稿时，按本页准备材料并提交。
+```yaml
+url: https://github.com/acme/data-helper
+name: 数据助手
+category: data
+description:
+  zh: 帮助团队整理、检查并解释日常业务数据。
+```
 
-**本机安装并实际验证是投稿的前提**。
+## 可选的 GitHub Release 安装包
 
-## 投稿渠道
+如果已经发布稳定的 `.tgz`，可以增加：
 
-### GitHub Pull Request（当前唯一可用渠道）
+```yaml
+release:
+  url: https://github.com/acme/data-helper/releases/download/v1.0.0/workbench.tgz
+  sha256: 64位小写SHA-256
+```
 
-1. 把业务源码放在作者仓库，确保审核者可读取指定版本。
-2. 复制 [投稿材料模板](examples/submission.md) 准备说明。
-3. 将材料保存为 `submissions/<工作台标识>/<版本>.md`，通过 Pull Request 提交到本仓库。该路径仅为文档约定，不是正式机器协议。
-4. 维护者按 [验收清单](docs/review-checklist.md) 核对；需要修改时更新材料和对应 commit SHA，再次验收。
-5. 验收通过后由维护者收录到 [目录](catalog/README.md)。在线市场展示需等待服务接入。
+地址必须指向同一仓库的固定 Release 版本，不能使用 `latest` 或会变化的下载地址。不要提交安装包、密钥、邮箱或业务数据。
 
-每个版本都需要重新验收。源代码使用**完整 commit SHA** 定位，不接受可移动的分支或 tag。
+## 后续版本
 
-### 产品内投稿（计划中，未实现）
+发布新版本时继续在自己的仓库发布。本阶段不要求每个版本再提目录 PR。若名称、分类、中文介绍或固定 Release 包发生变化，可以修改原来的 YAML 并提交 PR。
 
-计划支持在工作台市场内直接提交内容，并填写、校验邮箱。具体交互及邮箱校验方式待确定；当前请勿在公开 PR、示例或目录中提交个人邮箱。
-
-## 投稿材料
-
-材料应覆盖以下内容，并以勾选清单形式自查：
-
-- [ ] **基本信息**：场景、名称、标识、版本、作者。
-- [ ] **源码定位**：完整 commit SHA（不接受分支或 tag）。
-- [ ] **安装与验证**：安装步骤、可检查的源码、**实际验证过的 DSH Desktop 版本**；安装包需附 SHA-256 并能追溯到对应源码版本。
-- [ ] **依赖与权限**：外部服务、工具、网络与文件访问需求、凭据配置方式、费用和限制。**不提交凭据或个人数据**。
-- [ ] **授权说明**：自身源码、资源及依赖的授权情况。
-- [ ] **验证证据**：本次变更说明 + 可复现的测试步骤 + 实测结果与环境。
-
-未覆盖的宿主接口或未测试的环境应明确写出，不以预期行为代替验证结果。
-
-## 接收后
-
-材料合并进本仓库并被审核者按 [验收清单](docs/review-checklist.md) 验收后，工作台版本才会进入 [目录](catalog/README.md)。在线市场展示仍需等待服务接入；合并材料本身不代表已经上线。
+机器人生成的 `id`、仓库 owner/name、安装来源类型等字段不要写进 YAML，它们由构建脚本从仓库地址和文件内容计算。

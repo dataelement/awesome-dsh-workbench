@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/DSH-AI/awesome-dsh-workbench/schema/workbench.schema.json",
+  "title": "DSH Workbench directory entry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["url", "name", "category", "description"],
+  "properties": {
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/?$"
+    },
+    "name": { "type": "string", "minLength": 1, "maxLength": 60 },
+    "category": {
+      "type": "string",
+      "enum": ["development", "productivity", "content", "data", "other"]
+    },
+    "description": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["zh"],
+      "properties": {
+        "zh": { "type": "string", "minLength": 10, "maxLength": 200 }
+      }
+    },
+    "release": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "sha256"],
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://github\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/releases/download/[^/]+/[^/]+\\.tgz$"
+        },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    }
+  }
+}
