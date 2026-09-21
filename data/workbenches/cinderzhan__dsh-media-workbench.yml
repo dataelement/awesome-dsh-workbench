@@ -1,0 +1,9 @@
+url: https://github.com/cinderzhan/dsh-media-workbench
+name: 内容运营工作台
+category: content
+description:
+  zh: 管理选题、达人、Campaign 和营销日历，汇总各平台发布数据，四窗口布局中保留原生会话。
+  en: Manage topics, creators, campaigns and a marketing calendar, collect publishing metrics across platforms, and keep the native conversation in a four-pane layout.
+screenshots:
+  - https://raw.githubusercontent.com/cinderzhan/dsh-media-workbench/main/docs/screenshots/media-overview.png
+tarball: https://github.com/cinderzhan/dsh-media-workbench/releases/latest/download/dsh-media-workbench.tgz
