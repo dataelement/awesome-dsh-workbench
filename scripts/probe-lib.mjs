@@ -3,6 +3,9 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import * as tar from 'tar'
+import semver from 'semver'
+import { safeRelativePath } from './catalog-lib.mjs'
+import { inspectImage, readBounded, MAX_IMAGE_BYTES, MAX_PACKAGE_BYTES } from './media-lib.mjs'
 
 export class ProbeError extends Error {
   constructor(code, message, { incomplete = false } = {}) {
@@ -35,13 +38,10 @@ export function validateManifest(manifest, pkg) {
   if (pkg && manifest?.version !== pkg.version) errors.push('workbench.json 与 package.json 版本不一致')
   if (!manifest?.compatibility?.desktopWorkbenches || !manifest?.compatibility?.harness) errors.push('缺少 compatibility 要求')
   if (!Array.isArray(manifest?.capabilities) || !manifest.capabilities.every((value) => typeof value === 'string')) errors.push('capabilities 必须是字符串数组')
-  if (manifest?.screenshots !== undefined) {
-    if (!Array.isArray(manifest.screenshots) || manifest.screenshots.length < 1 || manifest.screenshots.length > 5) errors.push('screenshots 必须为 1–5 项')
-    else for (const item of manifest.screenshots) {
-      const image = typeof item === 'string' ? item : item?.path
-      if (typeof image !== 'string' || image.startsWith('/') || image.split(/[\\/]+/).includes('..') || !/\.(png|jpe?g|webp)$/i.test(image)) errors.push('截图必须是安全的相对图片路径')
-    }
-  }
+  if (!manifest?.version || semver.valid(manifest.version) !== manifest.version) errors.push('version 必须为完整 SemVer')
+  if (!safeRelativePath(manifest?.entry, { allowDotPrefix: true })) errors.push('entry 必须是安全相对路径')
+  if (!Array.isArray(pkg?.dsh?.client?.inject) || !pkg.dsh.client.inject.includes('dsh-desktop-workbenches')) errors.push('client 必须注入 dsh-desktop-workbenches')
+  if (!safeRelativePath(pkg?.dsh?.bundle?.patch, { allowDotPrefix: true })) errors.push('缺少安全的 dsh.bundle.patch 路径')
   if (errors.length) throw new ProbeError('invalid-manifest', errors.join('；'))
   return manifest
 }
@@ -50,18 +50,17 @@ async function fetchJsonFile(fetchImpl, owner, repository, sha, name, required =
   const response = await fetchImpl(`https://raw.githubusercontent.com/${owner}/${repository}/${sha}/${name}`)
   if (!response.ok) {
     if (!required && response.status === 404) return null
-    throw new ProbeError('invalid-manifest', `${name} 不存在或不可读取`)
+    throw new ProbeError('invalid-manifest', `${name} 不存在或不可读取`, { incomplete: response.status === 429 || response.status >= 500 })
   }
-  try { return JSON.parse(await response.text()) } catch { throw new ProbeError('invalid-manifest', `${name} 不是有效 JSON`) }
+  try { return JSON.parse((await readBounded(response, 256 * 1024, name)).toString()) } catch { throw new ProbeError('invalid-manifest', `${name} 不是有效 JSON`) }
 }
 
 async function inspectRelease(fetchImpl, release, expectedId, expectedVersion) {
   const response = await fetchImpl(release.url)
-  if (!response.ok) throw new ProbeError('release-unavailable', `Release 下载失败（HTTP ${response.status}）`)
-  const declared = Number(response.headers.get('content-length') || 0)
-  if (declared > 16 * 1024 * 1024) throw new ProbeError('release-invalid', 'Release 包超过 16 MB 探测上限')
-  const bytes = Buffer.from(await response.arrayBuffer())
-  if (bytes.length > 16 * 1024 * 1024) throw new ProbeError('release-invalid', 'Release 包超过 16 MB 探测上限')
+  if (!response.ok) throw new ProbeError('release-unavailable', `Release 下载失败（HTTP ${response.status}）`, { incomplete: response.status === 429 || response.status >= 500 })
+  let bytes
+  try { bytes = await readBounded(response, MAX_PACKAGE_BYTES, 'Release 包（上限 8 MiB）') }
+  catch (error) { throw new ProbeError('release-invalid', error.message) }
   const digest = crypto.createHash('sha256').update(bytes).digest('hex')
   if (digest !== release.sha256) throw new ProbeError('release-mismatch', 'Release 包 SHA-256 与目录声明不一致')
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'dsh-release-'))
@@ -78,14 +77,17 @@ async function inspectRelease(fetchImpl, release, expectedId, expectedVersion) {
       expandedBytes += entry.size || 0
       if (entry.size > 8 * 1024 * 1024 || expandedBytes > 32 * 1024 * 1024 || names.length > 500) throw new Error('解包内容超过安全上限')
     } })
-    if (names.some((name) => path.isAbsolute(name) || name.split('/').includes('..'))) throw new Error('包含不安全路径')
+    if (names.some((name) => !safeRelativePath(name.replace(/\/$/, '')))) throw new Error('包含不安全路径')
     await tar.x({ file: archive, cwd: unpacked, strict: true, preservePaths: false })
-    const manifestName = names.find((name) => /(^|\/)workbench\.json$/.test(name))
+    const manifests = names.filter((name) => /(^|\/)workbench\.json$/.test(name))
+    if (manifests.length !== 1) throw new Error('包必须包含唯一 workbench.json')
+    const manifestName = manifests[0]
     if (!manifestName) throw new Error('缺少 workbench.json')
     const root = path.dirname(path.join(unpacked, manifestName))
     const manifest = JSON.parse(await fs.readFile(path.join(unpacked, manifestName), 'utf8'))
     const pkg = JSON.parse(await fs.readFile(path.join(root, 'package.json'), 'utf8'))
     validateManifest(manifest, pkg)
+    if (!(await fs.stat(path.join(root, pkg.dsh.bundle.patch)).catch(() => null))?.isFile()) throw new Error('Release 包缺少 bundle patch 文件')
     const entry = path.resolve(root, manifest.entry)
     const relative = path.relative(root, entry)
     if (!relative || relative.startsWith('..') || path.isAbsolute(relative) || !(await fs.stat(entry).catch(() => null))?.isFile()) {
@@ -102,16 +104,39 @@ async function inspectRelease(fetchImpl, release, expectedId, expectedVersion) {
 }
 
 export async function probeEntry(record, { fetchImpl = fetch } = {}) {
+  const originalFetch = fetchImpl
+  fetchImpl = (url, options = {}) => originalFetch(url, { ...options, signal: AbortSignal.timeout(30_000) })
   const { entry, owner, repository } = record
   const repo = await responseJson(await fetchImpl(`https://api.github.com/repos/${owner}/${repository}`), '仓库')
   if (repo.private) throw new ProbeError('unavailable', '仓库不是公开仓库')
   if (repo.archived) throw new ProbeError('archived', '仓库已归档')
   if (!repo.license?.spdx_id || repo.license.spdx_id === 'NOASSERTION') throw new ProbeError('missing-license', '仓库没有可识别的许可证')
-  const commit = await responseJson(await fetchImpl(`https://api.github.com/repos/${owner}/${repository}/commits/${encodeURIComponent(repo.default_branch)}`), '默认分支 commit')
-  if (!/^[a-f0-9]{40}$/i.test(commit.sha || '')) throw new ProbeError('unavailable', 'GitHub 没有返回完整 source commit')
+  const commit = await responseJson(await fetchImpl(`https://api.github.com/repos/${owner}/${repository}/commits/${entry.source.commit}`), '固定源码 commit')
+  if (commit.sha !== entry.source.commit) throw new ProbeError('unavailable', 'GitHub 返回的 commit 与投稿固定版本不一致')
   const manifest = await fetchJsonFile(fetchImpl, owner, repository, commit.sha, 'workbench.json')
-  const pkg = await fetchJsonFile(fetchImpl, owner, repository, commit.sha, 'package.json', false)
+  const pkg = await fetchJsonFile(fetchImpl, owner, repository, commit.sha, 'package.json')
   validateManifest(manifest, pkg)
+  if (manifest.id !== entry.workbenchId || manifest.version !== entry.version) throw new ProbeError('source-mismatch', 'YAML 与固定源码的 workbenchId/version 不一致')
+  const sourceUrl = (file) => `https://raw.githubusercontent.com/${owner}/${repository}/${commit.sha}/${file.split('/').map(encodeURIComponent).join('/')}`
+  for (const file of [pkg.dsh.bundle.patch, ...(entry.release ? [] : [manifest.entry])]) {
+    const response = await fetchImpl(sourceUrl(file))
+    if (!response.ok) throw new ProbeError('invalid-manifest', `固定源码缺少 ${file}`)
+    await readBounded(response, MAX_PACKAGE_BYTES, file)
+  }
+  const screenshots = []
+  for (const image of entry.screenshots) {
+    if (!safeRelativePath(image.path)) throw new ProbeError('invalid-image', '截图路径不安全')
+    const url = sourceUrl(image.path)
+    const response = await fetchImpl(url)
+    if (!response.ok) throw new ProbeError('invalid-image', `截图不可读取：${image.path}`, { incomplete: response.status === 429 || response.status >= 500 })
+    try {
+      const bytes = await readBounded(response, MAX_IMAGE_BYTES, image.path)
+      const dimensions = await inspectImage(bytes, image.path)
+      screenshots.push({ url, alt: image.alt, ...dimensions, sha256: crypto.createHash('sha256').update(bytes).digest('hex') })
+    } catch (error) {
+      throw new ProbeError('invalid-image', `${image.path}: ${error.message}`)
+    }
+  }
 
   let npmPackage = null
   if (pkg?.name && sameRepository(pkg.repository, owner, repository)) {
@@ -130,14 +155,7 @@ export async function probeEntry(record, { fetchImpl = fetch } = {}) {
   return {
     workbenchId: manifest.id,
     version: manifest.version,
-    screenshots: (manifest.screenshots || []).map((item) => {
-      const imagePath = typeof item === 'string' ? item : item.path
-      const encoded = imagePath.split('/').map(encodeURIComponent).join('/')
-      return {
-        url: `https://raw.githubusercontent.com/${owner}/${repository}/${commit.sha}/${encoded}`,
-        ...(typeof item === 'object' && item.alt ? { alt: item.alt } : {})
-      }
-    }),
+    screenshots,
     sourceCommit: commit.sha,
     license: repo.license.spdx_id,
     npmPackage,

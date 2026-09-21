@@ -1,39 +1,38 @@
-# 工作台市场投稿指南
+# 工作台投稿指南
 
-投稿前，请先按 [DSH Desktop 工作台开发指南](https://dshdesktop.com/workbench/skills/workbench-development/SKILL.md) 在本机安装、打开并验证工作台。源码和发布包继续由作者维护。
+## 先完成本机验证
 
-## 第一次投稿
+投稿前安装并实际打开工作台，记录宿主完整版本、系统和架构、验证步骤与结果。未测试平台不能声明已兼容。宿主接口以[固定源码参考](docs/host-contract.md)和实际安装版本为准，不把开发中接口当作已发布 SDK。
 
-1. Fork 本仓库并创建分支。
-2. 复制 `examples/workbench.yml` 到 `data/workbenches/<GitHub owner>__<仓库名>.yml`。
-3. 填写真实内容。文件中的 `url` 必须和文件名指向同一个公开 GitHub 仓库。
-4. 运行 `npm ci && npm run check`。检查会在本机生成 `dist/catalog.json`，不要把它加入提交。
-5. 发起 Pull Request。投稿 PR 只能新增或修改这一份 YAML，方便审核范围保持清楚。
+## 新增与更新
 
-例如 `https://github.com/acme/data-helper` 对应 `data/workbenches/acme__data-helper.yml`。
+1. 业务源码、许可证、图片和安装说明保留在公开作者仓库，不上传凭据、个人邮箱或业务数据。
+2. 复制 [examples/workbench.yml](examples/workbench.yml)，替换全部占位值，保存到 `data/workbenches/<owner>__<repo>.yml`。
+3. 固定完整源码 commit。`workbenchId`、`version` 必须与该 commit 的 `workbench.json` 一致，版本也必须与 `package.json` 一致。
+4. 在同一 YAML 填写截图路径和说明、实际安装与卸载步骤、验证记录、权限、外部服务和费用。字段详见[目录协议](catalog/README.md)。
+5. 执行 `npm ci --ignore-scripts && npm run check`。这验证格式、example、测试和离线生成，不代表远程包或产品行为已经验证。
+6. PR 只新增或修改这一份 YAML；不要提交生成的 JSON、图片二进制或安装包。CI 使用 main 中的可信脚本验证固定源码、截图和发布包；维护者核对业务行为与权限。
 
-```yaml
-url: https://github.com/acme/data-helper
-name: 数据助手
-category: data
-description:
-  zh: 帮助团队整理、检查并解释日常业务数据。
-```
+**每个可安装版本重新审核。** 更新原 YAML，不按版本复制多份文件。变更 commit、版本、Release 或截图后都需要重新检查；同一个 PR 推送新提交后，旧审批应失效。展示文案修改可简化人工验收，但不能跳过自动检查。
 
-## 可选的 GitHub Release 安装包
+v1 暂只支持仓库根目录的一个工作台。monorepo 子目录、多工作台共仓和 npm 作为直接安装源未定义，不能用猜测的字段绕过 Schema。npm 映射只是辅助信息，不能替代 Release 校验或固定源码。
 
-如果已经发布稳定的 `.tgz`，可以增加：
+## 不同 PR 的范围
 
-```yaml
-release:
-  url: https://github.com/acme/data-helper/releases/download/v1.0.0/workbench.tgz
-  sha256: 64位小写SHA-256
-```
+| 类型 | 范围和审核 |
+| --- | --- |
+| 新增 / 版本更新 / 展示信息修改 | 一份工作台 YAML，自动探测 + 维护者审批 |
+| 下架 | 单独删除一份 YAML，PR 说明原因、影响和作者反馈；维护者审批 |
+| 仓库维护 | Schema、脚本、工作流或文档，运行完整检查；不得混入投稿条目 |
 
-地址必须指向同一仓库的固定 Release 版本，不能使用 `latest` 或会变化的下载地址。不要提交安装包、密钥、邮箱或业务数据。
+贡献者可以建议修订其他条目，但不能自授维护权；维护者核对作者/仓库关联和修改理由。不自动接受作者自填的“审核通过”。更换仓库或工作台 ID 可能影响安装与会话归属，必须先由维护者评估迁移，不得当作普通重命名。
 
-## 后续版本
+旧 `submissions/<id>/<version>.md` 不再是正式投稿协议。尚未合并的旧材料需由作者迁移至 YAML，并保留原 PR 的验证讨论；不自动把旧草稿转换为已验收条目。
 
-发布新版本时继续在自己的仓库发布。本阶段不要求每个版本再提目录 PR。若名称、分类、中文介绍或固定 Release 包发生变化，可以修改原来的 YAML 并提交 PR。
+## 如何理解检查结果
 
-机器人生成的 `id`、仓库 owner/name、安装来源类型等字段不要写进 YAML，它们由构建脚本从仓库地址和文件内容计算。
+- Catalog CI：离线数据、example、测试及变更范围检查。
+- Trusted catalog probe：读取固定源码，检查可安装声明、图片、包及唯一性；不执行工作台代码。
+- 远程限流或网络错误：未完成验证，检查不放行，可重跑。
+- 人工审核：核对真实使用、版本来源、权限、授权和已知限制；CI 无法替代。
+- 合并后构建成功：生成目录 artifact。只有发布成功且线上读到该条目才是已发布。

@@ -14,6 +14,7 @@ jobs:
   gate:
     if: ${{ github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Check out trusted main code only
         uses: actions/checkout@v4
@@ -30,8 +31,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
-          PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+          CANDIDATE_SHA: ${{ github.event.workflow_run.head_sha }}
         run: node scripts/trusted-pr-gate.mjs
-      - name: Report incomplete probe
-        if: ${{ steps.gate.outputs.gate_status == 'incomplete' }}
-        run: echo "### ⚪ 探测暂未完成\n远程服务不可用或触发限流，请稍后重新运行。" >> "$GITHUB_STEP_SUMMARY"

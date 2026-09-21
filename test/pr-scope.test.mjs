@@ -40,7 +40,7 @@ test('rejects generated dist changes beside one YAML', async () => {
   git('commit', '-qm', 'entry and catalog')
   const result = spawnSync(process.execPath, [script, base, 'HEAD'], { cwd: directory, encoding: 'utf8' })
   assert.equal(result.status, 1)
-  assert.match(result.stderr, /dist\/catalog\.json/)
+  assert.match(result.stderr, /不能混入/)
 })
 
 test('rejects catalog data mixed with unrelated changes', async () => {
@@ -52,5 +52,13 @@ test('rejects catalog data mixed with unrelated changes', async () => {
   git('commit', '-qm', 'mixed')
   const result = spawnSync(process.execPath, [script, base, 'HEAD'], { cwd: directory, encoding: 'utf8' })
   assert.equal(result.status, 1)
-  assert.match(result.stderr, /包含无关文件/)
+  assert.match(result.stderr, /不能混入/)
+})
+
+test('separates maintenance, removal, and submission scope', async () => {
+  const { classifyChanges } = await import('../scripts/pr-policy.mjs')
+  assert.equal(classifyChanges([{ filename: 'scripts/tool.mjs', status: 'modified' }]).type, 'maintenance')
+  assert.equal(classifyChanges([{ filename: 'data/workbenches/owner__repo.yml', status: 'removed' }]).type, 'removal')
+  assert.throws(() => classifyChanges([{ filename: 'README.md', previous_filename: 'data/workbenches/owner__repo.yml', status: 'renamed' }]), /路径/)
+  assert.throws(() => classifyChanges([{ filename: 'data/workbenches/owner__repo.json', status: 'added' }]), /路径/)
 })
