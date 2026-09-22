@@ -16,4 +16,5 @@ while (fields.length) {
     files.push({ status: ({ A: 'added', M: 'modified', D: 'removed' })[status] || status, filename })
   }
 }
-console.log(`PR 类型：${classifyChanges(files).type}`)
+const trusted = ['OWNER', 'MEMBER', 'COLLABORATOR'].includes(process.env.AUTHOR_ASSOCIATION)
+console.log(`PR 类型：${classifyChanges(files, { allowCatalogMaintenance: trusted }).type}`)
