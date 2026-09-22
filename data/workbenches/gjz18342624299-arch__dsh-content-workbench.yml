@@ -1,0 +1,10 @@
+url: https://github.com/gjz18342624299-arch/dsh-content-workbench
+workbenchId: wb-gjz18342624299-arch-dsh-content-workbench
+name: 自媒体内容创作工作台
+category: content
+description:
+  zh: 左侧管理选题、平台稿件与素材库，右侧把写作任务连同上下文交给 DSH 对话完成；支持公众号图文、小红书笔记、短视频脚本、知乎回答四种格式，含版本留档与发布数据复盘。
+  en: Manage topics, platform drafts and a material library in a side panel, then hand writing tasks with full context to the DSH conversation; supports WeChat articles, Xiaohongshu notes, short-video scripts and Zhihu answers, with version history and post-publish analytics.
+screenshots:
+  - https://raw.githubusercontent.com/gjz18342624299-arch/dsh-content-workbench/main/docs/screenshots/overview.png
+  - https://raw.githubusercontent.com/gjz18342624299-arch/dsh-content-workbench/main/docs/screenshots/data-overview.png
