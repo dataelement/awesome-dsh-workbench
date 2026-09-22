@@ -1,4 +1,7 @@
 url: https://github.com/dataelement/dsh-ming-life
+workbenchId: wb-dataelement-dsh-ming-life
+legacyWorkbenchIds:
+  - ming-life
 name: 玄学人生工作台
 category: other
 description:

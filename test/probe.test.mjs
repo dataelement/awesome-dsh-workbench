@@ -7,16 +7,20 @@ import path from 'node:path'
 import test from 'node:test'
 import * as tar from 'tar'
 import sharp from 'sharp'
-import { probeEntry, ProbeError } from '../scripts/probe-lib.mjs'
+import { MAX_UNPACKED_BYTES, probeEntry, ProbeError } from '../scripts/probe-lib.mjs'
 import { buildPublishedCatalog, validatePublishedCatalog } from '../scripts/published-catalog.mjs'
 import { generateCatalog } from '../scripts/catalog-lib.mjs'
 
 const pkg = { name: '@owner/workbench', version: '2.0.0', repository: 'https://github.com/owner/repo.git', exports: { './client': './client.js' }, dsh: { client: { inject: ['dsh-desktop-workbenches'] }, bundle: { patch: './cordis.patch.yml' } } }
-const record = (tarball) => ({ owner: 'owner', repository: 'repo', entry: { url: 'https://github.com/owner/repo', name: '项目助手', category: 'other', description: { zh: '帮助整理项目资料、跟进任务并生成工作报告。', en: 'Organize project materials, track tasks, and generate work reports.' }, screenshots: ['https://raw.githubusercontent.com/owner/repo/main/main.png'], ...(tarball ? { tarball } : {}) } })
+const record = (tarball) => ({ owner: 'owner', repository: 'repo', entry: { url: 'https://github.com/owner/repo', workbenchId: 'project-helper', name: '项目助手', category: 'other', description: { zh: '帮助整理项目资料、跟进任务并生成工作报告。', en: 'Organize project materials, track tasks, and generate work reports.' }, screenshots: ['https://raw.githubusercontent.com/owner/repo/main/main.png'], ...(tarball ? { tarball } : {}) } })
 const json = (body) => new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json' } })
 const releaseUrl = 'https://github.com/owner/repo/releases/download/v1.2.3/workbench.tgz'
 const npmUrl = 'https://registry.npmjs.org/@owner/workbench/-/workbench-1.2.3.tgz'
 const digest = (bytes, algorithm = 'sha256', encoding = 'hex') => crypto.createHash(algorithm).update(bytes).digest(encoding)
+
+test('permits up to 64 MiB of unpacked package contents', () => {
+  assert.equal(MAX_UNPACKED_BYTES, 64 * 1024 * 1024)
+})
 
 async function archive({ version = '1.2.3', name = pkg.name, repository = pkg.repository } = {}) {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'dsh-package-'))
