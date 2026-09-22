@@ -8,6 +8,12 @@ import yaml from 'js-yaml'
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 export const DATA_DIR = path.join(ROOT, 'data/workbenches')
 
+export function workbenchIdFor(owner, repository) {
+  const id = `wb-${owner}-${repository}`.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+  if (!/^[a-z][a-z0-9-]{0,79}$/.test(id)) throw new Error(`仓库身份不能生成有效的工作台 ID：${owner}/${repository}`)
+  return id
+}
+
 function formatAjvErrors(errors = []) {
   return errors.map((error) => `${error.instancePath || '/'} ${error.message}`).join('; ')
 }
@@ -65,6 +71,7 @@ export async function readEntry(file, validate, { example = false } = {}) {
   if (!validate(entry)) throw new Error(`${relative} 不符合 schema：${formatAjvErrors(validate.errors)}`)
 
   const { owner, repository } = repositoryParts(entry.url)
+  if (entry.workbenchId !== workbenchIdFor(owner, repository)) throw new Error(`${relative} 的 workbenchId 必须为 wb-<owner>-<repo>`)
   if (repository.toLowerCase().endsWith('.git')) throw new Error(`${relative} 的 url 请使用仓库主页，不要以 .git 结尾`)
   const expected = `${owner}__${repository}.yml`.toLowerCase()
   if (!example && path.basename(file).toLowerCase() !== expected) {
@@ -109,6 +116,7 @@ export function generateCatalog(records, categories) {
       .map(({ entry, owner, repository }) => ({
         id: `${owner}/${repository}`.toLowerCase(),
         workbenchId: entry.workbenchId,
+        ...(entry.legacyWorkbenchIds ? { legacyWorkbenchIds: entry.legacyWorkbenchIds } : {}),
         owner,
         repository,
         url: entry.url.replace(/\/$/, ''),

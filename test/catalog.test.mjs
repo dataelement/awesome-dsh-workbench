@@ -3,7 +3,7 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
-import { createValidator, generateCatalog, readEntry, ROOT, screenshotUrl } from '../scripts/catalog-lib.mjs'
+import { createValidator, generateCatalog, readEntry, ROOT, screenshotUrl, workbenchIdFor } from '../scripts/catalog-lib.mjs'
 
 const fixture = path.join(ROOT, 'test/fixtures/valid/owner__repo.yml')
 
@@ -15,7 +15,7 @@ test('minimal example is the production protocol, with the declared runtime ID',
   const catalog = generateCatalog([record], [])
   assert.equal(catalog.workbenches[0].name, record.entry.name)
   assert.equal(catalog.workbenches[0].id, 'owner/repo')
-  assert.equal(catalog.workbenches[0].workbenchId, 'project-helper')
+  assert.equal(catalog.workbenches[0].workbenchId, workbenchIdFor('owner', 'repo'))
   assert.deepEqual(catalog.workbenches[0].description, record.entry.description)
   assert.equal(catalog.workbenches[0].distribution, undefined) // Only a successful probe chooses an install target.
 })
@@ -61,7 +61,12 @@ test('requires a stable runtime workbench ID', async () => {
   const validate = await createValidator()
   const { entry } = await readEntry(fixture, validate)
   for (const workbenchId of [undefined, '', 'Not Valid', 'owner/repository']) assert.equal(validate({ ...entry, workbenchId }), false)
-  assert.equal(validate({ ...entry, workbenchId: 'project-helper-2' }), true)
+  assert.equal(validate({ ...entry, workbenchId: workbenchIdFor('project-helper', 'two') }), true)
+})
+
+test('derives runtime IDs directly from the repository identity', () => {
+  assert.equal(workbenchIdFor('DataElement', 'dsh-ming-life'), 'wb-dataelement-dsh-ming-life')
+  assert.equal(workbenchIdFor('owner_name', 'repo.name'), 'wb-owner-name-repo-name')
 })
 
 test('requires both description locales and rejects blanks, extra locales, and legacy strings', async () => {

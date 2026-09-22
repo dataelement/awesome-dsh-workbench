@@ -74,6 +74,9 @@
           "workbenchId": {
             "$ref": "https://github.com/dataelement/awesome-dsh-workbench/schema/workbench.schema.json#/properties/workbenchId"
           },
+          "legacyWorkbenchIds": {
+            "$ref": "https://github.com/dataelement/awesome-dsh-workbench/schema/workbench.schema.json#/properties/legacyWorkbenchIds"
+          },
           "owner": {
             "type": "string",
             "minLength": 1

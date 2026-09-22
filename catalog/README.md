@@ -22,7 +22,7 @@ screenshots:
 | 字段 | 要求 |
 | --- | --- |
 | `url` | GitHub 仓库主页，与文件名一致 |
-| `workbenchId` | 必填、稳定的运行时工作台 ID，格式为 `^[a-z][a-z0-9-]{0,79}$`，必须与插件的 `desktopWorkbenches.register({ id })` 相同；不是展示名称、npm 包名或仓库身份 |
+| `workbenchId` | 必填、稳定的运行时工作台 ID，固定为 `wb-<owner>-<repo>`（小写且将非字母数字字符折为连字符），必须与插件的 `desktopWorkbenches.register({ id })` 相同；不是展示名称或 npm 包名 |
 | `name` | 必填，市场展示名称，非空单行字符串 |
 | `category` | [七个分类](../data/categories.json)之一 |
 | `description.zh` / `description.en` | 中英文均必填、非空单行；不接受未支持的语言键，不限制为恰好一句或固定字数 |
@@ -48,7 +48,7 @@ screenshots:
 
 这些信息随定期探测刷新。修改 GitHub About、发布新包或更新原路径图片都不需要目录 PR。名称、分类、双语介绍和截图顺序属于市场编排，无法可靠地从 repo 元数据获取，因此保留在 YAML。
 
-源码默认分支可能比正式 npm/Release 版本更新，因此不要求二者版本相同。目录唯一键是仓库；`workbenchId` 是另一份稳定身份，必须与插件加载后的 `register({ id })` 相同。目录构建拒绝重复的 `workbenchId`，Desktop 也会在安装时检查本机冲突。
+源码默认分支可能比正式 npm/Release 版本更新，因此不要求二者版本相同。目录唯一键是仓库；`workbenchId` 由仓库身份确定为 `wb-<owner>-<repo>`，必须与插件加载后的 `register({ id })` 相同。目录构建拒绝重复、超长或不符合该规则的 `workbenchId`，Desktop 也会在安装时检查本机冲突。
 
 ## 截图标准
 
