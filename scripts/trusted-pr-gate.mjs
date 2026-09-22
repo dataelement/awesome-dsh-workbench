@@ -40,7 +40,8 @@ export async function runGate({ env = process.env, fetchImpl = fetch, dataDir = 
         if (batch.length < 100) break
         if (page >= 30) throw new Error('PR 文件过多，无法完整审核')
       }
-      const policy = classifyChanges(files)
+      const trusted = ['OWNER', 'MEMBER', 'COLLABORATOR'].includes(pull.author_association)
+      const policy = classifyChanges(files, { allowCatalogMaintenance: trusted })
       if (policy.type !== 'submission') {
         await report('success', policy.type === 'removal' ? '下架范围检查通过；仍需维护者审批，且不会卸载用户本机工作台。' : '仓库维护 PR；由 Catalog CI 与维护者审核，不执行投稿来源探测。')
         continue

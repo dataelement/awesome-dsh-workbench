@@ -62,6 +62,17 @@ test('separates maintenance, removal, and submission scope', async () => {
   assert.throws(() => classifyChanges([{ filename: 'data/workbenches/owner__repo.json', status: 'added' }]), /路径/)
 })
 
+test('only trusted catalog maintenance may update entries with infrastructure', async () => {
+  const { classifyChanges } = await import('../scripts/pr-policy.mjs')
+  const files = [
+    { filename: 'schema/workbench.schema.json', status: 'modified' },
+    { filename: 'data/workbenches/owner__one.yml', status: 'modified' },
+    { filename: 'data/workbenches/owner__two.yml', status: 'modified' }
+  ]
+  assert.throws(() => classifyChanges(files), /只修改一份工作台 YAML/)
+  assert.equal(classifyChanges(files, { allowCatalogMaintenance: true }).type, 'maintenance')
+})
+
 test('rejects generated-only and renamed output while allowing cleanup', async () => {
   const { classifyChanges } = await import('../scripts/pr-policy.mjs')
   for (const filename of ['data/index.json', 'dist/catalog.json', '.cache/catalog-preview.json']) {
