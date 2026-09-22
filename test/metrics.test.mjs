@@ -85,5 +85,5 @@ test('a package identity change cannot inherit another package count', async () 
 
 test('published schema compiles with optional metrics', async () => {
   const validate = await createPublishedValidator()
-  assert.equal(validate({ schemaVersion: 2, kind: 'catalog', categories: [], workbenches: [] }), true)
+  assert.equal(validate({ schemaVersion: 3, kind: 'catalog', categories: [], workbenches: [] }), true)
 })

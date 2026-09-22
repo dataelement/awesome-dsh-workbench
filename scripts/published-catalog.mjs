@@ -16,10 +16,12 @@ export async function validatePublishedCatalog(catalog) {
   const validate = await createPublishedValidator()
   if (!validate(catalog)) throw new Error(`发布目录协议无效：${JSON.stringify(validate.errors)}`)
   const ids = new Set()
+  const workbenchIds = new Set()
   for (const item of catalog.workbenches) {
     const id = `${item.owner}/${item.repository}`.toLowerCase()
-    if (item.id !== id || item.url.toLowerCase() !== `https://github.com/${id}` || ids.has(id)) throw new Error('发布目录仓库身份不一致或重复')
+    if (item.id !== id || item.url.toLowerCase() !== `https://github.com/${id}` || ids.has(id) || workbenchIds.has(item.workbenchId)) throw new Error('发布目录仓库或工作台身份不一致或重复')
     ids.add(id)
+    workbenchIds.add(item.workbenchId)
     const install = item.distribution
     if (item.version !== install.version || semver.valid(item.version) !== item.version) throw new Error('发布目录安装版本不一致')
     if (install.type === 'github-source' && (install.commit !== item.sourceCommit || install.url !== item.url)) throw new Error('源码安装位置不一致')

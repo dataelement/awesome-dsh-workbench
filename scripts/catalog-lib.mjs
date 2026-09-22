@@ -89,22 +89,26 @@ export async function loadEntries({ directory = DATA_DIR } = {}) {
   const records = []
   for (const name of names) records.push(await readEntry(path.join(directory, name), validate))
   const ids = new Set()
-  for (const { owner, repository } of records) {
+  const workbenchIds = new Set()
+  for (const { owner, repository, entry } of records) {
     const id = `${owner}/${repository}`.toLowerCase()
     if (ids.has(id)) throw new Error(`仓库重复：${id}`)
+    if (workbenchIds.has(entry.workbenchId)) throw new Error(`工作台 ID 重复：${entry.workbenchId}`)
     ids.add(id)
+    workbenchIds.add(entry.workbenchId)
   }
   return records
 }
 
 export function generateCatalog(records, categories) {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     kind: 'preview',
     categories,
     workbenches: records
       .map(({ entry, owner, repository }) => ({
         id: `${owner}/${repository}`.toLowerCase(),
+        workbenchId: entry.workbenchId,
         owner,
         repository,
         url: entry.url.replace(/\/$/, ''),

@@ -12,7 +12,7 @@ import { buildPublishedCatalog, validatePublishedCatalog } from '../scripts/publ
 import { generateCatalog } from '../scripts/catalog-lib.mjs'
 
 const pkg = { name: '@owner/workbench', version: '2.0.0', repository: 'https://github.com/owner/repo.git', exports: { './client': './client.js' }, dsh: { client: { inject: ['dsh-desktop-workbenches'] }, bundle: { patch: './cordis.patch.yml' } } }
-const record = (tarball) => ({ owner: 'owner', repository: 'repo', entry: { url: 'https://github.com/owner/repo', name: '项目助手', category: 'other', description: { zh: '帮助整理项目资料、跟进任务并生成工作报告。', en: 'Organize project materials, track tasks, and generate work reports.' }, screenshots: ['https://raw.githubusercontent.com/owner/repo/main/main.png'], ...(tarball ? { tarball } : {}) } })
+const record = (tarball) => ({ owner: 'owner', repository: 'repo', entry: { url: 'https://github.com/owner/repo', workbenchId: 'project-helper', name: '项目助手', category: 'other', description: { zh: '帮助整理项目资料、跟进任务并生成工作报告。', en: 'Organize project materials, track tasks, and generate work reports.' }, screenshots: ['https://raw.githubusercontent.com/owner/repo/main/main.png'], ...(tarball ? { tarball } : {}) } })
 const json = (body) => new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json' } })
 const releaseUrl = 'https://github.com/owner/repo/releases/download/v1.2.3/workbench.tgz'
 const npmUrl = 'https://registry.npmjs.org/@owner/workbench/-/workbench-1.2.3.tgz'
