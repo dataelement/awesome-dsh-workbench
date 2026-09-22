@@ -102,7 +102,7 @@ export async function loadEntries({ directory = DATA_DIR } = {}) {
 
 export function generateCatalog(records, categories) {
   return {
-    schemaVersion: 3,
+    schemaVersion: 2,
     kind: 'preview',
     categories,
     workbenches: records

@@ -78,7 +78,7 @@ screenshots:
 `data/index.json` 不提交；GitHub Actions 将整个 `data/` 目录上传为 Pages artifact，因此发布后索引位于站点根路径 `/index.json`。全部探测通过后才替换 Pages 部署。首次收录经过人工审核，后续发版由作者负责并自动探测；这不意味着每个后续版本经过人工审核或安全审计。
 
 
-正式 JSON 由 [catalog.schema.json](../schema/catalog.schema.json)校验，版本为 `schemaVersion: 3`。版本 3 恢复必填的 `workbenchId`：它是市场安装记录与重启后 runtime provider 合并的稳定键，必须等于插件实际注册的 ID。`id` 仍为仓库身份，二者不能互相替代：
+正式 JSON 由 [catalog.schema.json](../schema/catalog.schema.json)校验，版本保持 `schemaVersion: 2`。版本 2 增加必填且向旧客户端兼容的 `workbenchId` 扩展：它是市场安装记录与重启后 runtime provider 合并的稳定键，必须等于插件实际注册的 ID。`id` 仍为仓库身份，二者不能互相替代：
 
 | 安装类型 `distribution.type` | 消费者必须读取的目标 |
 | --- | --- |

@@ -11,7 +11,7 @@
   ],
   "properties": {
     "schemaVersion": {
-      "const": 3
+      "const": 2
     },
     "kind": {
       "const": "catalog"
