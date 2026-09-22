@@ -15,6 +15,8 @@ export class ProbeError extends Error {
   }
 }
 
+export const MAX_UNPACKED_BYTES = 64 * 1024 * 1024
+
 async function responseJson(response, label) {
   if (response.status === 403 || response.status === 429) throw new ProbeError('rate-limited', `${label} 遇到 GitHub 限流`, { incomplete: true })
   if (!response.ok) throw new ProbeError('unavailable', `${label} 请求失败（HTTP ${response.status}）`, { incomplete: response.status >= 500 })
@@ -82,7 +84,7 @@ async function inspectPackage(fetchImpl, url, { expectedVersion, expectedName, i
       names.push(entry.path)
       if (!['File', 'Directory'].includes(entry.type)) throw new Error(`不允许 ${entry.type} 条目`)
       expandedBytes += entry.size || 0
-      if (entry.size > 8 * 1024 * 1024 || expandedBytes > 32 * 1024 * 1024 || names.length > 500) throw new Error('解包内容超过安全上限')
+      if (entry.size > 8 * 1024 * 1024 || expandedBytes > MAX_UNPACKED_BYTES || names.length > 500) throw new Error('解包内容超过安全上限')
     } })
     if (names.some((name) => !safeRelativePath(name.replace(/\/$/, '')))) throw new Error('包含不安全路径')
     await tar.x({ file: archive, cwd: unpacked, strict: true, preservePaths: false })

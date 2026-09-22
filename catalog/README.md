@@ -67,7 +67,7 @@ screenshots:
 
 当前只支持仓库根目录的一个工作台，暂不支持 monorepo 子目录。源码根目录及最终选中的 npm/Release 包都以 `package.json` 为安装事实源：必须包含完整 SemVer 版本、指回条目仓库的 `repository`、安全的 `dsh.bundle.patch`、注入 `dsh-desktop-workbenches` 的客户端声明，以及安全且真实存在的 `exports["./client"]`。无需额外维护 `workbench.json`；展示名称和双语简介来自目录 YAML，`workbenchId` 来自目录 YAML，布局和行为由插件加载后注册。
 
-包不超过 8 MiB，解包不执行代码，拒绝越界和链接，并限制解压体积与文件数。源码安装要求 bundle patch 与客户端入口已经存在，目录构建不替作者编译。能力和权限字符串不作为可信安全声明；需要权限控制时应由宿主提供并执行真实授权协议。
+包不超过 8 MiB，解包不执行代码，拒绝越界和链接；单文件不超过 8 MiB、解包总大小不超过 64 MiB，并限制文件数。源码安装要求 bundle patch 与客户端入口已经存在，目录构建不替作者编译。能力和权限字符串不作为可信安全声明；需要权限控制时应由宿主提供并执行真实授权协议。
 
 校验器的宿主格式依据固定于 Desktop commit `9d04845dfe6b66f9df3a5e0b401b9a8e1f1d45f9` 的[包校验脚本](https://github.com/dataelement/dsh-desktop/blob/9d04845dfe6b66f9df3a5e0b401b9a8e1f1d45f9/scripts/check-workbench-package.mjs)；开发方式可参考该版本的[作者指南](https://github.com/dataelement/dsh-desktop/blob/9d04845dfe6b66f9df3a5e0b401b9a8e1f1d45f9/packages/dsh-desktop-workbenches/development-guide.zh.md)。此依据不代表所有 Desktop 发布版本兼容，投稿仍需记录实际验证的宿主版本；目录消费者接入和安装需独立验收。
 

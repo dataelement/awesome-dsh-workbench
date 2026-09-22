@@ -7,7 +7,7 @@ import path from 'node:path'
 import test from 'node:test'
 import * as tar from 'tar'
 import sharp from 'sharp'
-import { probeEntry, ProbeError } from '../scripts/probe-lib.mjs'
+import { MAX_UNPACKED_BYTES, probeEntry, ProbeError } from '../scripts/probe-lib.mjs'
 import { buildPublishedCatalog, validatePublishedCatalog } from '../scripts/published-catalog.mjs'
 import { generateCatalog } from '../scripts/catalog-lib.mjs'
 
@@ -17,6 +17,10 @@ const json = (body) => new Response(JSON.stringify(body), { headers: { 'content-
 const releaseUrl = 'https://github.com/owner/repo/releases/download/v1.2.3/workbench.tgz'
 const npmUrl = 'https://registry.npmjs.org/@owner/workbench/-/workbench-1.2.3.tgz'
 const digest = (bytes, algorithm = 'sha256', encoding = 'hex') => crypto.createHash(algorithm).update(bytes).digest(encoding)
+
+test('permits up to 64 MiB of unpacked package contents', () => {
+  assert.equal(MAX_UNPACKED_BYTES, 64 * 1024 * 1024)
+})
 
 async function archive({ version = '1.2.3', name = pkg.name, repository = pkg.repository } = {}) {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'dsh-package-'))
