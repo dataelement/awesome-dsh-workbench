@@ -33,10 +33,10 @@
 
 生产域名、客户端索引地址和告警接收人需由维护者配置，不能写入个人账号或凭据。
 
-## Star 与 npm 下载统计
+## Star、npm 与 Release 下载统计
 
-安装信息完整探测成功后，发布任务为索引补充 `metrics`。GitHub API 使用同一工作流 token；npm 统计只查已验证的 npm 分发包。请求超时 10 秒，429/5xx 最多请求 4 次，按 Retry-After（最多等待 30 秒）或指数退避；npm 新请求间至少等待 2 秒。网络异常保留旧值并标记 stale，无旧值则发布 unavailable，不影响安装目录发布。
+安装信息完整探测成功后，发布任务为索引补充 `metrics`。GitHub API 使用同一工作流 token；npm 统计只查已验证的 npm 分发包；GitHub Release 下载数只查 `github-release` 分发，分页读取仓库 Release（最多 1000 个），累加与分发地址同名的安装包文件下载次数。请求超时 10 秒，429/5xx 最多请求 4 次，按 Retry-After（最多等待 30 秒）或指数退避；npm 新请求间至少等待 2 秒。网络异常保留旧值并标记 stale，无旧值则发布 unavailable，不影响安装目录发布。
 
-`.cache/metrics.json` 不提交、不上传 Pages，由 Actions cache restore/save 跨运行保存。push 使用 24 小时内的成功 star 缓存，npm 缓存还必须对应当前 30 天窗口；新增条目和窗口变化会触发请求。每日 03:23 UTC 和手动运行设置 `METRICS_FORCE=1` 强制更新统计。仅保留当前目录引用的仓库/包，npm 包名变化不会继承旧包的下载量。
+`.cache/metrics.json` 不提交、不上传 Pages，由 Actions cache restore/save 跨运行保存。push 使用 24 小时内的成功 star 和 Release 下载缓存，npm 缓存还必须对应当前 30 天窗口；新增条目和窗口变化会触发请求。每日 03:23 UTC 和手动运行设置 `METRICS_FORCE=1` 强制更新统计。仅保留当前目录引用的仓库/包，npm 包名变化不会继承旧包的下载量。
 
 Actions cache 可能被淘汰；冷启动遇到 API 故障会明确输出 unavailable，不能承诺永久保留历史统计。统计不是必需安装信息，因此不采用全目录覆盖率阻断发布；日志记录采集失败，客户端依据状态区分无数据与过期数据。当前目录为空，只能验证空目录发布及模拟采集；首次真实条目仍需核对 GitHub/npm 数值、Pages 输出和客户端展示。

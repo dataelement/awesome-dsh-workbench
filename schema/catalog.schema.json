@@ -444,6 +444,79 @@
                     }
                   }
                 ]
+              },
+              "githubReleaseDownloads": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "value",
+                  "checkedAt",
+                  "status"
+                ],
+                "properties": {
+                  "value": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "checkedAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "status": {
+                    "enum": [
+                      "ok",
+                      "stale",
+                      "unavailable",
+                      "not_applicable"
+                    ]
+                  }
+                },
+                "allOf": [
+                  {
+                    "if": {
+                      "properties": {
+                        "status": {
+                          "enum": [
+                            "ok",
+                            "stale"
+                          ]
+                        }
+                      }
+                    },
+                    "then": {
+                      "required": [
+                        "value",
+                        "checkedAt"
+                      ],
+                      "properties": {
+                        "value": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "checkedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    },
+                    "else": {
+                      "properties": {
+                        "value": {
+                          "type": "null"
+                        },
+                        "checkedAt": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                ]
               }
             }
           }

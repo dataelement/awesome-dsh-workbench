@@ -191,10 +191,14 @@ test('published contract accepts every actual installation variant and rejects d
     await validatePublishedCatalog(catalog)
     catalog.workbenches[0].metrics.githubStars = { value: 0, checkedAt: '2026-09-21T00:00:00Z', status: 'ok' }
     catalog.workbenches[0].metrics.npmDownloads30d = { value: 4, checkedAt: '2026-09-21T00:00:00Z', status: 'stale', start: '2026-08-22', end: '2026-09-20' }
+    catalog.workbenches[0].metrics.githubReleaseDownloads = { value: 9, checkedAt: '2026-09-21T00:00:00Z', status: 'ok' }
     await validatePublishedCatalog(catalog)
     const badMetrics = structuredClone(catalog)
     badMetrics.workbenches[0].metrics.githubStars = { value: -1, checkedAt: null, status: 'ok' }
     await assert.rejects(() => validatePublishedCatalog(badMetrics), /协议/)
+    const badReleaseMetrics = structuredClone(catalog)
+    badReleaseMetrics.workbenches[0].metrics.githubReleaseDownloads = { value: 3, checkedAt: null, status: 'not_applicable' }
+    await assert.rejects(() => validatePublishedCatalog(badReleaseMetrics), /协议/)
 
     assert.deepEqual(catalog.workbenches[0].description, candidate.entry.description)
     const invalid = structuredClone(catalog)

@@ -83,6 +83,40 @@ test('a package identity change cannot inherit another package count', async () 
   assert.equal(data.workbenches[0].metrics.npmDownloads30d.status, 'unavailable')
 })
 
+const releaseItem = () => ({ owner: 'Owner', repository: 'Repo', distribution: { type: 'github-release', url: 'https://github.com/Owner/Repo/releases/download/v1.1.0/tool.tgz' } })
+const releases = (page) => page === 1
+  ? [{ assets: [{ name: 'tool.tgz', download_count: 7 }, { name: 'tool.tgz.sha256', download_count: 90 }] },
+     { draft: true, assets: [{ name: 'tool.tgz', download_count: 50 }] },
+     { assets: [{ name: 'tool.tgz', download_count: 5 }] }]
+  : []
+const releaseFetch = async (url) => url.includes('/releases?')
+  ? json(releases(Number(new URL(url).searchParams.get('page'))))
+  : json({ full_name: 'Owner/Repo', stargazers_count: 3 })
+
+test('counts the listed release package across published releases', async () => {
+  const data = { workbenches: [releaseItem()] }
+  const urls = []
+  const cache = await enrichMetrics(data, { ...options, fetchImpl: async (url) => { urls.push(url); return releaseFetch(url) } })
+  assert.deepEqual(data.workbenches[0].metrics.githubReleaseDownloads, { value: 12, checkedAt: now.toISOString(), status: 'ok' })
+  assert.equal(urls.filter((url) => url.includes('/releases?')).length, 1)
+  const npm = catalog()
+  await enrichMetrics(npm, { ...options, fetchImpl: goodFetch })
+  assert.equal(npm.workbenches[0].metrics.githubReleaseDownloads.status, 'not_applicable')
+  let cachedRequests = 0
+  await enrichMetrics({ workbenches: [releaseItem()] }, { ...options, previous: cache, fetchImpl: () => { cachedRequests++; throw new Error('fresh data must not fetch') } })
+  assert.equal(cachedRequests, 0)
+})
+
+test('release download failures keep the old count as stale and reject invalid counts', async () => {
+  const previous = await enrichMetrics({ workbenches: [releaseItem()] }, { ...options, fetchImpl: releaseFetch })
+  const data = { workbenches: [releaseItem()] }
+  await enrichMetrics(data, { ...options, previous, now: new Date('2026-09-23T12:00:00Z'), fetchImpl: async () => { throw new Error('offline') } })
+  assert.deepEqual(data.workbenches[0].metrics.githubReleaseDownloads, { value: 12, checkedAt: now.toISOString(), status: 'stale' })
+  const bad = { workbenches: [releaseItem()] }
+  await enrichMetrics(bad, { ...options, fetchImpl: async (url) => url.includes('/releases?') ? json([{ assets: [{ name: 'tool.tgz', download_count: -1 }] }]) : releaseFetch(url) })
+  assert.deepEqual(bad.workbenches[0].metrics.githubReleaseDownloads, { value: null, checkedAt: null, status: 'unavailable' })
+})
+
 test('published schema compiles with optional metrics', async () => {
   const validate = await createPublishedValidator()
   assert.equal(validate({ schemaVersion: 2, kind: 'catalog', categories: [], workbenches: [] }), true)
