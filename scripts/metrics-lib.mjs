@@ -20,7 +20,31 @@ function validValue(metric) {
     && typeof metric.checkedAt === 'string' && Number.isFinite(Date.parse(metric.checkedAt))
 }
 
-// Prior data is matched by repository and npm package, never by display name.
+const MAX_RELEASE_PAGES = 10
+function releaseAssetName(url) {
+  const name = decodeURIComponent(new URL(url).pathname.split('/').pop() || '')
+  if (!name) throw new Error('release asset name missing')
+  return name
+}
+async function countReleaseDownloads(id, asset, { fetchImpl, sleep }) {
+  let total = 0
+  for (let page = 1; page <= MAX_RELEASE_PAGES; page++) {
+    const releases = await request(`https://api.github.com/repos/${id}/releases?per_page=100&page=${page}`, { fetchImpl, sleep })
+    if (!Array.isArray(releases)) throw new Error('release list is not an array')
+    for (const release of releases) {
+      if (release?.draft || !Array.isArray(release?.assets)) continue
+      for (const file of release.assets) {
+        if (file?.name !== asset) continue
+        if (!Number.isSafeInteger(file.download_count) || file.download_count < 0) throw new Error('invalid release download count')
+        total += file.download_count
+      }
+    }
+    if (releases.length < 100) return total
+  }
+  throw new Error('too many releases to count')
+}
+
+// Prior data is matched by repository, npm package and release asset, never by display name.
 export async function enrichMetrics(catalog, {
   previous = {}, fetchImpl = fetch, now = new Date(), force = false,
   sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
@@ -28,7 +52,7 @@ export async function enrichMetrics(catalog, {
 } = {}) {
   const checkedAt = now.toISOString()
   const window = downloadWindow(now)
-  const cache = { repositories: {}, packages: {} }
+  const cache = { repositories: {}, packages: {}, releases: {} }
   const fresh = (old) => !force && old?.status === 'ok' && validValue(old) && now - new Date(old.checkedAt) >= 0 && now - new Date(old.checkedAt) < DAY
   async function collect(old, query) {
     try {
@@ -72,7 +96,18 @@ export async function enrichMetrics(catalog, {
       }
       downloads = cache.packages[key]
     }
-    item.metrics = { githubStars: cache.repositories[id], npmDownloads30d: downloads }
+    let releaseDownloads = { value: null, checkedAt: null, status: 'not_applicable' }
+    if (item.distribution.type === 'github-release') {
+      // Counts the listed package file across every release, so the total survives version bumps.
+      const asset = releaseAssetName(item.distribution.url)
+      const key = `${id}:${asset}`
+      if (!cache.releases[key]) {
+        const old = previous?.releases?.[key]
+        cache.releases[key] = fresh(old) ? { ...old, status: 'ok' } : await collect(old, () => countReleaseDownloads(id, asset, { fetchImpl, sleep }))
+      }
+      releaseDownloads = cache.releases[key]
+    }
+    item.metrics = { githubStars: cache.repositories[id], npmDownloads30d: downloads, githubReleaseDownloads: releaseDownloads }
   }
   return cache
 }

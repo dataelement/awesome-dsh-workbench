@@ -96,14 +96,16 @@ screenshots:
 {
   "metrics": {
     "githubStars": { "value": 12, "checkedAt": "2026-09-21T03:23:00.000Z", "status": "ok" },
-    "npmDownloads30d": { "value": 45, "checkedAt": "2026-09-21T03:23:00.000Z", "status": "ok", "start": "2026-08-22", "end": "2026-09-20" }
+    "npmDownloads30d": { "value": 45, "checkedAt": "2026-09-21T03:23:00.000Z", "status": "ok", "start": "2026-08-22", "end": "2026-09-20" },
+    "githubReleaseDownloads": { "value": 12, "checkedAt": "2026-09-21T03:23:00.000Z", "status": "ok" }
   }
 }
 ```
 
 - `githubStars` 来自 GitHub REST 仓库的 `stargazers_count`，不是平台点赞数。
 - `npmDownloads30d` 仅查询已通过安装来源校验的 npm 包；截至 UTC 昨天的 30 天窗口，不是安装量、活跃用户或独立用户数。不累计 GitHub Release 下载。
-- `ok` 表示成功采集或仍在缓存有效期内；`stale` 保留最后成功值及其原始采集时间、下载窗口；`unavailable` 表示没有可用值；`not_applicable` 仅用于非 npm 分发的下载统计。
+- `githubReleaseDownloads` 仅用于 `github-release` 分发：累计该仓库所有已发布（非草稿）Release 中、与分发地址同名的安装包文件的 `download_count`，版本升级后总数不清零。它是下载次数，同样不是安装量或用户数；旧目录可能没有这个字段。
+- `ok` 表示成功采集或仍在缓存有效期内；`stale` 保留最后成功值及其原始采集时间、下载窗口；`unavailable` 表示没有可用值；`not_applicable` 用于分发方式不适用的下载统计（非 npm 的 `npmDownloads30d`、非 GitHub Release 的 `githubReleaseDownloads`）。
 - 无值时 `value` 和 `checkedAt` 均为 `null`；真实的 0 保留为数字 0。客户端不能把未知值转换成 0；过期数据应显示更新时间，排序不能把未知当成零下载。
 - `metrics` 缺失的旧目录仍符合 v1；使用旧版严格 Schema 的客户端需要同步此可选字段定义，再消费新版目录。安装字段没有变化。统计不可用不等于工作台安装探测失败。
 
