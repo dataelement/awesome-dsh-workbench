@@ -6,7 +6,6 @@
 
 ```yaml
 url: https://github.com/owner/repo
-workbenchId: project-helper
 name: 项目助手
 category: productivity
 description:
@@ -22,18 +21,17 @@ screenshots:
 | 字段 | 要求 |
 | --- | --- |
 | `url` | GitHub 仓库主页，与文件名一致 |
-| `workbenchId` | 必填、稳定的运行时工作台 ID，固定为 `wb-<owner>-<repo>`（小写且将非字母数字字符折为连字符），必须与插件的 `desktopWorkbenches.register({ id })` 相同；不是展示名称或 npm 包名 |
 | `name` | 必填，市场展示名称，非空单行字符串 |
 | `category` | [七个分类](../data/categories.json)之一 |
 | `description.zh` / `description.en` | 中英文均必填、非空单行；不接受未支持的语言键，不限制为恰好一句或固定字数 |
 | `screenshots` | 1–5 个源仓库托管的完整 HTTPS 图片地址，第一张为封面 |
 | `tarball` | 可选，同仓库 GitHub Release 的 `.tgz` / `.tar.gz` URL，不是安装命令 |
 
-[完整 example](../examples/workbench.yml)直接使用正式 [Schema](../schema/workbench.schema.json)校验。不要填作者 ID、版本、源码 commit、npm 包名、校验值、验证记录或权限表。这些分别来自 GitHub、工作台包、自动探测及 PR 审核材料。`workbenchId` 是唯一需由作者声明的运行时身份。输入 YAML 没有独立 `schemaVersion`，输出目录保留机器协议版本。
+[完整 example](../examples/workbench.yml)直接使用正式 [Schema](../schema/workbench.schema.json)校验。不要填作者 ID、版本、源码 commit、npm 包名、工作台 ID、校验值、验证记录或权限表。这些分别来自 GitHub、工作台包、自动探测及 PR 审核材料。输入 YAML 没有独立 `schemaVersion`，输出目录保留机器协议版本。
 
 ## 安装来源：npm → Release → 源码
 
-1. **npm**：从源码 `package.json.name` 发现包名。源码与 npm 最新发布版本的 `repository` 都指回该 GitHub 仓库才采用；下载包，校验 registry 的 SHA-512 integrity、包名、版本、工作台 ID 和可安装文件。输出精确版本、固定下载地址及 SHA-256，客户端不能重新解析 latest。
+1. **npm**：从源码 `package.json.name` 发现包名。源码与 npm 最新发布版本的 `repository` 都指回该 GitHub 仓库才采用；下载包，校验 registry 的 SHA-512 integrity、包名、版本和可安装文件。输出精确版本、固定下载地址及 SHA-256，客户端不能重新解析 latest。
 2. **Release**：无可用 npm 映射时，使用作者可选填写的 `tarball`。支持固定 tag 或 `latest/download/<作者指定的资源名>`；后者解析为指定资源的固定 tag 下载地址。检查实际包并计算校验值，不按附件数量或文件名惯例猜测安装包。
 3. **源码**：无可用 npm 映射且未声明 tarball 时，使用仓库默认分支解析出的完整 commit，检查实际入口及 bundle patch。仓库中存在 Release 不会隐式改变此选择。
 
@@ -48,7 +46,7 @@ screenshots:
 
 这些信息随定期探测刷新。修改 GitHub About、发布新包或更新原路径图片都不需要目录 PR。名称、分类、双语介绍和截图顺序属于市场编排，无法可靠地从 repo 元数据获取，因此保留在 YAML。
 
-源码默认分支可能比正式 npm/Release 版本更新，因此不要求二者版本相同。目录唯一键是仓库；`workbenchId` 由仓库身份确定为 `wb-<owner>-<repo>`，必须与插件加载后的 `register({ id })` 相同。目录构建拒绝重复、超长或不符合该规则的 `workbenchId`，Desktop 也会在安装时检查本机冲突。
+源码默认分支可能比正式 npm/Release 版本更新，因此不要求二者版本相同。目录唯一键是小写的 `owner/repository`，Desktop 以这个仓库身份保存工作台状态。插件不再自行声明工作台 ID。
 
 ## 截图标准
 
@@ -65,7 +63,7 @@ screenshots:
 
 ## 包与宿主
 
-当前只支持仓库根目录的一个工作台，暂不支持 monorepo 子目录。源码根目录及最终选中的 npm/Release 包都以 `package.json` 为安装事实源：必须包含完整 SemVer 版本、指回条目仓库的 `repository`、安全的 `dsh.bundle.patch`、注入 `dsh-desktop-workbenches` 的客户端声明，以及安全且真实存在的 `exports["./client"]`。无需额外维护 `workbench.json`；展示名称和双语简介来自目录 YAML，`workbenchId` 来自目录 YAML，布局和行为由插件加载后注册。
+当前只支持仓库根目录的一个工作台，暂不支持 monorepo 子目录。源码根目录及最终选中的 npm/Release 包都以 `package.json` 为安装事实源：必须包含完整 SemVer 版本、指回条目仓库的 `repository`、安全的 `dsh.bundle.patch`、注入 `dsh-desktop-workbenches` 的客户端声明，以及安全且真实存在的 `exports["./client"]`。无需额外维护 `workbench.json`；展示名称和双语简介来自目录 YAML，布局和行为由插件加载后注册。
 
 包不超过 8 MiB，解包不执行代码，拒绝越界和链接；单文件不超过 8 MiB、解包总大小不超过 64 MiB，并限制文件数。源码安装要求 bundle patch 与客户端入口已经存在，目录构建不替作者编译。能力和权限字符串不作为可信安全声明；需要权限控制时应由宿主提供并执行真实授权协议。
 
@@ -73,12 +71,12 @@ screenshots:
 
 ## 客户端索引
 
-`npm run probe` 解析安装优先级并校验，在 runner 的 `data/index.json` 生成客户端索引，输出 `distribution`、实际版本、源码 commit、运行时 ID、图片 URL、校验值及探测状态。不要把这些生成字段抄回 YAML。
+`npm run probe` 解析安装优先级并校验，在 runner 的 `data/index.json` 生成客户端索引，输出仓库 `id`、`distribution`、实际版本、源码 commit、图片 URL、校验值及探测状态。不要把这些生成字段抄回 YAML。
 
 `data/index.json` 不提交；GitHub Actions 将整个 `data/` 目录上传为 Pages artifact，因此发布后索引位于站点根路径 `/index.json`。全部探测通过后才替换 Pages 部署。首次收录经过人工审核，后续发版由作者负责并自动探测；这不意味着每个后续版本经过人工审核或安全审计。
 
 
-正式 JSON 由 [catalog.schema.json](../schema/catalog.schema.json)校验，版本保持 `schemaVersion: 2`。版本 2 增加必填且向旧客户端兼容的 `workbenchId` 扩展：它是市场安装记录与重启后 runtime provider 合并的稳定键，必须等于插件实际注册的 ID。`id` 仍为仓库身份，二者不能互相替代：
+正式 JSON 由 [catalog.schema.json](../schema/catalog.schema.json)校验，版本保持 `schemaVersion: 2`。条目的 `id` 就是唯一工作台身份，由 GitHub 仓库的 `owner/repository` 自动生成：
 
 | 安装类型 `distribution.type` | 消费者必须读取的目标 |
 | --- | --- |
