@@ -1,0 +1,13 @@
+url: https://github.com/dataelement/dsh-site-selection
+workbenchId: wb-dataelement-dsh-site-selection
+legacyWorkbenchIds:
+  - site-selection
+name: 门店选址
+category: operations
+description:
+  zh: 在真实三维城市地图上比较候选点位、评分依据和周边铺源，并记录踩点与选址决策。
+  en: Compare candidate sites, scoring evidence, and nearby listings on a real 3D city map, then record visits and location decisions.
+screenshots:
+  - https://raw.githubusercontent.com/dataelement/dsh-site-selection/main/docs/screenshots/site-map.png
+  - https://raw.githubusercontent.com/dataelement/dsh-site-selection/main/docs/screenshots/site-detail.png
+  - https://raw.githubusercontent.com/dataelement/dsh-site-selection/main/docs/screenshots/site-reference.png
