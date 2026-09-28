@@ -3,19 +3,18 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
-import { createValidator, generateCatalog, readEntry, ROOT, screenshotUrl, workbenchIdFor } from '../scripts/catalog-lib.mjs'
+import { createValidator, generateCatalog, readEntry, ROOT, screenshotUrl } from '../scripts/catalog-lib.mjs'
 
 const fixture = path.join(ROOT, 'test/fixtures/valid/owner__repo.yml')
 
-test('minimal example is the production protocol, with the declared runtime ID', async () => {
+test('minimal example is the production protocol and derives identity from the repository', async () => {
   const record = await readEntry(fixture, await createValidator())
   const example = await readEntry(path.join(ROOT, 'examples/workbench.yml'), await createValidator(), { example: true })
   assert.deepEqual(record, example)
-  assert.deepEqual(Object.keys(record.entry), ['url', 'workbenchId', 'name', 'category', 'description', 'screenshots'])
+  assert.deepEqual(Object.keys(record.entry), ['url', 'name', 'category', 'description', 'screenshots'])
   const catalog = generateCatalog([record], [])
   assert.equal(catalog.workbenches[0].name, record.entry.name)
   assert.equal(catalog.workbenches[0].id, 'owner/repo')
-  assert.equal(catalog.workbenches[0].workbenchId, workbenchIdFor('owner', 'repo'))
   assert.deepEqual(catalog.workbenches[0].description, record.entry.description)
   assert.equal(catalog.workbenches[0].distribution, undefined) // Only a successful probe chooses an install target.
 })
@@ -55,18 +54,6 @@ test('catalog uniqueness key derives from GitHub owner/repository, sorted determ
   const make = (owner) => ({ owner, repository: 'Repo', entry: { ...entry, url: `https://github.com/${owner}/Repo` } })
   assert.equal(generateCatalog([make('Owner')], []).workbenches[0].id, 'owner/repo')
   assert.deepEqual(generateCatalog([make('zeta'), make('alpha')], []), generateCatalog([make('alpha'), make('zeta')], []))
-})
-
-test('requires a stable runtime workbench ID', async () => {
-  const validate = await createValidator()
-  const { entry } = await readEntry(fixture, validate)
-  for (const workbenchId of [undefined, '', 'Not Valid', 'owner/repository']) assert.equal(validate({ ...entry, workbenchId }), false)
-  assert.equal(validate({ ...entry, workbenchId: workbenchIdFor('project-helper', 'two') }), true)
-})
-
-test('derives runtime IDs directly from the repository identity', () => {
-  assert.equal(workbenchIdFor('DataElement', 'dsh-ming-life'), 'wb-dataelement-dsh-ming-life')
-  assert.equal(workbenchIdFor('owner_name', 'repo.name'), 'wb-owner-name-repo-name')
 })
 
 test('requires both description locales and rejects blanks, extra locales, and legacy strings', async () => {
