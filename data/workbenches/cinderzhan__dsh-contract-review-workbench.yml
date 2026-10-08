@@ -4,8 +4,8 @@ name: 合同审核工作台
 nameEn: Contract Review Workbench
 category: productivity
 description:
-  zh: 上传合同，选择规则与模型，查看 AI 审核问题，并逐条对比、接受或拒绝修订建议。
-  en: Upload contracts, choose review rules and models, inspect AI findings, and compare, accept, or reject proposed revisions.
+  zh: 上传合同，选择规则与模型，查看 AI 审核问题，逐条对比修订建议；历史文档保存在本机。
+  en: Upload contracts, choose review rules and models, inspect AI findings, compare proposed revisions, and keep document history on this device.
 screenshots:
   - https://raw.githubusercontent.com/cinderzhan/dsh-contract-review-workbench/main/docs/screenshots/comparison.jpg
-tarball: https://github.com/cinderzhan/dsh-contract-review-workbench/releases/latest/download/dsh-contract-review-workbench.tgz
+tarball: https://github.com/cinderzhan/dsh-contract-review-workbench/releases/download/v0.3.10/dsh-contract-review-workbench.tgz
