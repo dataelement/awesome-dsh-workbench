@@ -3,6 +3,7 @@ workbenchId: wb-cinderzhan-dsh-media-workbench
 legacyWorkbenchIds:
   - media-workbench
 name: 内容运营工作台
+nameEn: Content Operations Workbench
 category: content
 description:
   zh: 管理选题、达人、Campaign 和营销日历，汇总各平台发布数据，四窗口布局中保留原生会话。

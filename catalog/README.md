@@ -7,6 +7,7 @@
 ```yaml
 url: https://github.com/owner/repo
 name: 项目助手
+nameEn: Project Assistant
 category: productivity
 description:
   zh: 帮助整理项目资料、跟进任务并生成工作报告。
@@ -23,7 +24,8 @@ screenshots:
 | `url` | GitHub 仓库主页，与文件名一致 |
 | `workbenchId` | 可选兼容字段；若已有 YAML 保留，值必须等于由仓库推导的 `wb-<owner>-<repo>`。新投稿省略。宿主不要求 `register({ id })` |
 | `legacyWorkbenchIds` | 仅旧工作台身份迁移时使用的可选数组；保留现有条目的迁移值，新投稿通常省略 |
-| `name` | 必填，市场展示名称，非空单行字符串 |
+| `name` | 必填，中文市场展示名称，非空单行字符串 |
+| `nameEn` | 可选，英文市场展示名称，非空单行字符串；旧条目缺失时客户端回退到 `name` |
 | `category` | [七个分类](../data/categories.json)之一 |
 | `description.zh` / `description.en` | 中英文均必填、非空单行；不接受未支持的语言键，不限制为恰好一句或固定字数 |
 | `screenshots` | 1–5 个源仓库托管的完整 HTTPS 图片地址，第一张为封面 |
@@ -41,12 +43,12 @@ screenshots:
 
 ## 信息来源
 
-- 名称：作者填写的 `name`，用于市场列表页展示；非空单行字符串，不被仓库名或包名覆盖。
+- 名称：作者填写的中文 `name` 与英文 `nameEn`，用于市场列表页展示；均为非空单行字符串，不被仓库名或包名覆盖。旧条目没有 `nameEn` 时客户端使用 `name`。
 - 简介由 YAML 的 `description.zh` 和 `description.en` 提供，离线预览和在线目录均保留两种语言，不使用 GitHub About 或 manifest 覆盖。
 - 仓库身份、作者归属和许可证：GitHub 仓库元数据。
 - 包名、版本、安装地址和校验值：源码与选中发布包的 `package.json`。
 
-这些信息随定期探测刷新。修改 GitHub About、发布新包或更新原路径图片都不需要目录 PR。名称、分类、双语介绍和截图顺序属于市场编排，无法可靠地从 repo 元数据获取，因此保留在 YAML。
+这些信息随定期探测刷新。修改 GitHub About、发布新包或更新原路径图片都不需要目录 PR。双语名称、分类、双语介绍和截图顺序属于市场编排，无法可靠地从 repo 元数据获取，因此保留在 YAML。
 
 源码默认分支可能比正式 npm/Release 版本更新，因此不要求二者版本相同。目录唯一键是仓库 `owner/repo`；运行时 ID 由宿主按仓库身份派生。目录输出的 `workbenchId` 仍为 `wb-<owner>-<repo>`，仅供旧消费者兼容，不代表插件必须传 `register({ id })`。输入若保留该字段，目录构建检查其与派生值一致。
 
@@ -61,7 +63,7 @@ screenshots:
 - 建议横向 16:9、宽度至少 1280px；比例不是硬门槛，展示端等比适配。
 - 必须是真实产品画面，拥有素材使用权，不含凭据、个人信息或客户数据。截图必须从最终可安装版本中实拍，图片内容应与用户实际安装版本相符，由作者维护、人工抽查。
 
-修改图片内容或发布版本无需目录 PR；名称、双语介绍、图片地址、顺序、分类、仓库地址或 tarball 选择改变时更新 YAML。
+修改图片内容或发布版本无需目录 PR；双语名称、双语介绍、图片地址、顺序、分类、仓库地址或 tarball 选择改变时更新 YAML。
 
 ## 包与宿主
 

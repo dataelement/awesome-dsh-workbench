@@ -1,9 +1,9 @@
 [
-  { "id": "development", "name": { "zh": "开发" } },
-  { "id": "productivity", "name": { "zh": "效率" } },
-  { "id": "content", "name": { "zh": "内容" } },
-  { "id": "data", "name": { "zh": "数据" } },
-  { "id": "research", "name": { "zh": "调研" } },
-  { "id": "operations", "name": { "zh": "运营" } },
-  { "id": "other", "name": { "zh": "其他" } }
+  { "id": "development", "name": { "zh": "开发", "en": "Development" } },
+  { "id": "productivity", "name": { "zh": "效率", "en": "Productivity" } },
+  { "id": "content", "name": { "zh": "内容", "en": "Content" } },
+  { "id": "data", "name": { "zh": "数据", "en": "Data" } },
+  { "id": "research", "name": { "zh": "调研", "en": "Research" } },
+  { "id": "operations", "name": { "zh": "运营", "en": "Operations" } },
+  { "id": "other", "name": { "zh": "其他", "en": "Other" } }
 ]

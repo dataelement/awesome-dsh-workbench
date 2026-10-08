@@ -11,9 +11,10 @@ test('minimal example derives compatibility ID from repository identity', async 
   const record = await readEntry(fixture, await createValidator())
   const example = await readEntry(path.join(ROOT, 'examples/workbench.yml'), await createValidator(), { example: true })
   assert.deepEqual(record, example)
-  assert.deepEqual(Object.keys(record.entry), ['url', 'name', 'category', 'description', 'screenshots'])
+  assert.deepEqual(Object.keys(record.entry), ['url', 'name', 'nameEn', 'category', 'description', 'screenshots'])
   const catalog = generateCatalog([record], [])
   assert.equal(catalog.workbenches[0].name, record.entry.name)
+  assert.equal(catalog.workbenches[0].nameEn, record.entry.nameEn)
   assert.equal(catalog.workbenches[0].id, 'owner/repo')
   assert.equal(catalog.workbenches[0].workbenchId, workbenchIdFor('owner', 'repo'))
   assert.deepEqual(catalog.workbenches[0].description, record.entry.description)
@@ -120,4 +121,11 @@ test('requires a nonempty single-line market display name', async () => {
     assert.equal(validate({ ...entry, name }), false)
   }
   assert.equal(validate({ ...entry, name: '项目助手 Project Assistant' }), true)
+  for (const nameEn of [null, 42, '', '   ', 'First\nSecond', 'Trailing\n']) {
+    assert.equal(validate({ ...entry, nameEn }), false)
+  }
+  assert.equal(validate({ ...entry, nameEn: 'Project Assistant' }), true)
+  const { nameEn, ...legacyEntry } = entry
+  assert.equal(validate(legacyEntry), true)
+  assert.equal(generateCatalog([{ owner: 'owner', repository: 'repo', entry: legacyEntry }], []).workbenches[0].nameEn, undefined)
 })
