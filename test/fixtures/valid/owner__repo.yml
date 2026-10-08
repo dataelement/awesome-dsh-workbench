@@ -1,6 +1,7 @@
 # 结构示例；替换仓库和图片地址后投稿。
 url: https://github.com/owner/repo
 name: 项目助手
+nameEn: Project Assistant
 category: productivity
 description:
   zh: 帮助整理项目资料、跟进任务并生成工作报告。

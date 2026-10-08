@@ -122,6 +122,7 @@ export function generateCatalog(records, categories) {
         repository,
         url: entry.url.replace(/\/$/, ''),
         name: entry.name,
+        ...(entry.nameEn ? { nameEn: entry.nameEn } : {}),
         description: entry.description,
         screenshots: entry.screenshots,
         category: entry.category

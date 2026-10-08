@@ -1,5 +1,6 @@
 url: https://github.com/gjz18342624299-arch/dsh-seo-geo-workbench
 name: SEO/GEO 监测工作台
+nameEn: SEO/GEO Monitoring Workbench
 category: operations
 description:
   zh: 采集 AI 平台对问题集的真实回答并核对品牌证据，导入和分析 SEO 数据，生成固定版本、可追溯的行动报告；行动页按最新报告延续 P0/P1/P2 行动与复测目标，浏览器采集通过随包扩展在用户已登录的浏览器中完成。

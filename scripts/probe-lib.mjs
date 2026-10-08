@@ -192,6 +192,7 @@ export async function probeEntry(record, { fetchImpl = fetch } = {}) {
   }
   return {
     name,
+    ...(entry.nameEn ? { nameEn: entry.nameEn } : {}),
     description: entry.description,
     version: distribution.version,
     distribution,

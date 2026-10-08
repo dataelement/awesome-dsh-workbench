@@ -39,6 +39,10 @@
               "zh": {
                 "type": "string",
                 "minLength": 1
+              },
+              "en": {
+                "type": "string",
+                "minLength": 1
               }
             }
           }
@@ -91,6 +95,9 @@
           "name": {
             "type": "string",
             "minLength": 1
+          },
+          "nameEn": {
+            "$ref": "https://github.com/dataelement/awesome-dsh-workbench/schema/workbench.schema.json#/properties/nameEn"
           },
           "category": {
             "$ref": "https://github.com/dataelement/awesome-dsh-workbench/schema/workbench.schema.json#/properties/category"

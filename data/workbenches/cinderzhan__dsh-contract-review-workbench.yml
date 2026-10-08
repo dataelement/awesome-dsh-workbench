@@ -1,6 +1,7 @@
 url: https://github.com/cinderzhan/dsh-contract-review-workbench
 workbenchId: wb-cinderzhan-dsh-contract-review-workbench
 name: 合同审核工作台
+nameEn: Contract Review Workbench
 category: productivity
 description:
   zh: 上传合同，选择规则与模型，查看 AI 审核问题，并逐条对比、接受或拒绝修订建议。
