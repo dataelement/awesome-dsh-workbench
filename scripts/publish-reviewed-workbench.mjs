@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url'
 
 export function buildBrief({record, repository, number, sha, model}) {
   const clean = value => String(value || '').replace(/[\r\n<>]/g, ' ').replace(/@/g, '＠').slice(0, 600)
-  return `工作台上新｜${clean(record.name)}\n\n${clean(record.description.zh)}\n\n项目：${record.url}\n审核：${model} 内容审核与目录 CI 通过，投稿已合并。\nPR：https://github.com/${repository}/pull/${number}\n投稿版本：${sha.slice(0, 12)}\n\n机器审核不替代完整安全审计和 Desktop 实机验收。`
+  return `工作台上新｜${clean(record.name)}\n\n${clean(record.description.zh)}\n\n项目：${record.url}\n审核：${model} 静态内容审核与目录 CI 通过，投稿已合并。\nPR：https://github.com/${repository}/pull/${number}\n投稿版本：${sha.slice(0, 12)}\n\n本次为静态审核，未验证 Desktop 安装、运行及跨平台兼容；不代表完整安全审计。`
 }
 export async function publish({env = process.env, fetchImpl = fetch, merge = (repo, number, sha) => execFileSync('gh', ['pr','merge',String(number),'--repo',repo,'--merge','--match-head-commit',sha], {stdio:'pipe'}), pause = ms => new Promise(resolve => setTimeout(resolve, ms))} = {}) {
   const brief = JSON.parse(await fs.readFile(env.SECURITY_BRIEF_FILE, 'utf8'))

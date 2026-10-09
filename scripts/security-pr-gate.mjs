@@ -35,6 +35,7 @@ export async function runSecurityGate({ env = process.env, fetchImpl = fetch, ga
         `材料 SHA-256：${report.evidenceDigest}；标准 SHA-256：${report.standardsDigest}`,
         `分发：${escape(JSON.stringify(report.distribution))}`,
         escape(report.summary),
+        escape(report.limitations || '本次为静态审核，未验证 Desktop 实机运行。'),
         ...report.criteria.map((item) => `- ${item.id}: **${item.status}** — ${escape(item.reason)}（${item.evidence.map((ref) => escape(ref.file)).join(', ')}）`),
         '此结论仅覆盖上述快照；机器审核不证明 Desktop 实测或完整安全审计。全部目录 CI 通过且投稿未变化后，由独立发布步骤自动合并。'
       ].join('\n\n')

@@ -21,7 +21,7 @@ async function scenario(t,{failed=false,changed=false,duplicate=false,feishuFail
  }
  return {env,fetchImpl,events,merge:async(repo,number,sha)=>{assert.equal(sha,brief.sha);events.push('merge');merged=true}}
 }
-test('brief includes factual description and does not claim full security certification',()=>{assert.match(buildBrief(brief),/每日变化日报/);assert.match(buildBrief(brief),/不替代/)} )
+test('brief includes factual description and does not claim full security certification',()=>{assert.match(buildBrief(brief),/每日变化日报/);assert.match(buildBrief(brief),/未验证 Desktop/)} )
 test('merge confirmed before webhook, record success only after delivery',async t=>{const s=await scenario(t);await publish(s);assert.deepEqual(s.events,['merge','notify','receipt'])})
 test('failed checks or stale reviewed body prohibit merge and notification',async t=>{for(const options of [{failed:true},{changed:true}]){const s=await scenario(t,options);await assert.rejects(publish(s));assert.deepEqual(s.events,[])}})
 test('same snapshot successful receipt skips duplicate sends',async t=>{const s=await scenario(t,{duplicate:true});await publish(s);assert.deepEqual(s.events,[])})
