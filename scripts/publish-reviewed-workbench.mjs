@@ -2,6 +2,15 @@ import fs from 'node:fs/promises'
 import { execFileSync } from 'node:child_process'
 import { pathToFileURL } from 'node:url'
 
+export function latestChecks(checks) {
+  const latest = new Map()
+  for (const check of checks) {
+    const previous = latest.get(check.name)
+    if (!previous || Number(check.id) > Number(previous.id)) latest.set(check.name, check)
+  }
+  return [...latest.values()].filter(check => check.name !== 'Run trusted security reviewer')
+}
+
 export function buildBrief({record, repository, number, sha, model}) {
   const clean = value => String(value || '').replace(/[\r\n<>]/g, ' ').replace(/@/g, '＠').slice(0, 600)
   return `工作台上新｜${clean(record.name)}\n\n${clean(record.description.zh)}\n\n项目：${record.url}\n审核：${model} 静态内容审核与目录 CI 通过，投稿已合并。\nPR：https://github.com/${repository}/pull/${number}\n投稿版本：${sha.slice(0, 12)}\n\n本次为静态审核，未验证 Desktop 安装、运行及跨平台兼容；不代表完整安全审计。`
@@ -25,6 +34,7 @@ export async function publish({env = process.env, fetchImpl = fetch, merge = (re
     const checks = await api(`/commits/${sha}/check-runs?per_page=100&filter=latest`)
     if (checks.check_runs.some(c => c.name === 'Feishu workbench brief' && c.external_id === notificationId && c.conclusion === 'success')) { console.log('此审核快照已通知，跳过重复发送'); return }
     if (checks.total_count > 100) throw new Error('检查数量超出发布上限')
+    checks.check_runs = latestChecks(checks.check_runs)
     // The current workflow job is still running. Require the three independent
     // acceptance checks, and reject any other completed failed check.
     const required = ['validate','Trusted catalog probe','Workbench security review']
