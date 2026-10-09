@@ -192,3 +192,19 @@ test('numbered evidence selects existing bounded nonempty original lines', () =>
   result.criteria[0].evidence = [{file:'missing.js',startLine:1,endLine:1}]
   assert.throws(() => validateReview(result, lines), /文件不存在/)
 })
+
+test('one bounded evidence correction uses the same snapshot and still validates', async () => {
+  const bytes = await packageBytes()
+  let calls = 0
+  const result = await reviewSubmission({record, generated, pull, env:{COPILOT_GITHUB_TOKEN:'test'},fetchImpl:async()=>new Response(bytes),modelImpl:async request=>{
+    calls++
+    assert.ok(request.input.evidence[0].text.startsWith('[L1]'))
+    if(calls===1){const v=verdict();v.criteria[0].evidence[0].quote='invented evidence';return v}
+    assert.match(request.instructions,/引用校验失败/)
+    return verdict()
+  }})
+  assert.equal(calls,2);assert.equal(result.passed,true)
+  calls=0
+  await assert.rejects(reviewSubmission({record,generated,pull,env:{COPILOT_GITHUB_TOKEN:'test'},fetchImpl:async()=>new Response(bytes),modelImpl:async()=>{calls++;const v=verdict();v.criteria[0].evidence[0].quote='invented evidence';return v}}), /引文无法匹配/)
+  assert.equal(calls,2)
+})
