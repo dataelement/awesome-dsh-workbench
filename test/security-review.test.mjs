@@ -168,3 +168,14 @@ test('PR body change during review invalidates a passing verdict on the same hea
   assert.equal((await runSecurityGate({ env, ...mock, gate: async () => ({ type: 'submission', review: { ...verdict(), passed: true } }) })).failed, true)
   assert.equal(mock.writes.at(-1).conclusion, 'failure')
 })
+
+test('runtime acceptance is outside static CI criteria; harmless whitespace is accepted', () => {
+  assert.equal(Object.hasOwn(CRITERIA, 'runtime_evidence'), false)
+  const result = verdict()
+  result.criteria[0].evidence[0].quote = 'business\n   panel'
+  assert.equal(validateReview(result, evidence).passed, true)
+  result.criteria[0].evidence[0].quote = 'business invented panel'
+  assert.throws(() => validateReview(result, evidence), /identity.*引文无法匹配/)
+  result.criteria[0].evidence[0].file = 'invented/path'
+  assert.throws(() => validateReview(result, evidence), /identity.*文件不存在/)
+})
