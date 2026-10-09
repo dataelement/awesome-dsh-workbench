@@ -5,7 +5,8 @@ on:
     types: [opened, synchronize, reopened, ready_for_review, edited]
 permissions:
   contents: read
-  pull-requests: read
+  pull-requests: write
+  issues: write
   checks: write
 concurrency:
   group: workbench-security-${{ github.event.pull_request.number }}
@@ -19,15 +20,26 @@ jobs:
       - name: Check out trusted base code only
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.base.sha }}
+          ref: main
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Classify submission before installing dependencies
+        id: classify
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          CANDIDATE_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/security-preflight.mjs
       - run: npm ci --ignore-scripts
+        if: steps.classify.outputs.review == 'true'
       - name: Install pinned Copilot CLI
+        if: steps.classify.outputs.review == 'true'
         run: npm install --global @github/copilot@1.0.94
       - name: Probe and review immutable submission evidence
+        if: steps.classify.outputs.review == 'true'
         env:
           GITHUB_TOKEN: ${{ github.token }}
           COPILOT_GITHUB_TOKEN: ${{ secrets.MODELS_TOKEN }}
