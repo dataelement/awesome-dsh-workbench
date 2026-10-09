@@ -4,18 +4,22 @@ import { EventEmitter } from 'node:events'
 import { PassThrough } from 'node:stream'
 import fs from 'node:fs/promises'
 import { runCopilotReview, parseCopilotOutput, MODEL } from '../scripts/copilot-review.mjs'
-const output = (events = []) => [...events, { type: 'assistant.message', data: { model: MODEL, content: '{"summary":"ok"}', toolRequests: [] } }, { type: 'result', exitCode: 0 }].map(JSON.stringify).join('\n')
+const output = (events = []) => [...events, { type: 'assistant.message', data: { model: MODEL, phase: 'final_answer', content: '{"summary":"ok"}', toolRequests: [] } }, { type: 'result', exitCode: 0 }].map(JSON.stringify).join('\n')
 
 test('requires completed JSON output, exact model and no tools or active MCPs', () => {
   assert.deepEqual(parseCopilotOutput(output()), { summary: 'ok' })
+  assert.deepEqual(parseCopilotOutput(output([{ type: 'assistant.message', data: { model: MODEL, phase: 'commentary', content: 'Reviewing the evidence', toolRequests: [] } }])), { summary: 'ok' })
   for (const events of [
     [{ type: 'tool.execution_start', data: {} }],
     [{ type: 'model.call_start', data: { model: 'other' } }],
     [{ type: 'session.error' }],
+    [{ type: 'assistant.message', data: { model: MODEL, phase: 'commentary', content: 'Using tools', toolRequests: [{}] } }],
     [{ type: 'session.mcp_servers_loaded', data: { servers: [{ status: 'running' }] } }]
   ]) assert.throws(() => parseCopilotOutput(output(events)))
   assert.throws(() => parseCopilotOutput(output().replace('"exitCode":0', '"exitCode":1')))
   assert.throws(() => parseCopilotOutput(output().split('\n')[0]))
+  assert.throws(() => parseCopilotOutput(output().replace('final_answer', 'unknown_phase')))
+  assert.throws(() => parseCopilotOutput(output([{ type: 'assistant.message', data: { model: MODEL, phase: 'final_answer', content: '{}', toolRequests: [] } }])))
   assert.throws(() => parseCopilotOutput('provider raw error'))
   assert.throws(() => parseCopilotOutput(output().replace('{\\"summary\\":\\"ok\\"}', '```json {} ```')))
   assert.throws(() => parseCopilotOutput(output().replace('"toolRequests":[]', '"toolRequests":[{}]')))
