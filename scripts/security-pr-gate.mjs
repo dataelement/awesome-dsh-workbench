@@ -21,9 +21,9 @@ export async function runSecurityGate({ env = process.env, fetchImpl = fetch, ga
   const current = await api(`/pulls/${number}`)
   if (current.state !== 'open' || current.head?.sha !== sha || current.base?.ref !== 'main' || current.base?.repo?.full_name !== repository) throw new Error('PR 已关闭、无法关联或 head 已更新，审核未完成')
   const check = await api('/check-runs', 'POST', { name: CHECK_NAME, head_sha: sha, status: 'in_progress' })
-  let conclusion = 'failure', summary = '审核未完成', report
+  let conclusion = 'failure', summary = '审核未完成', report, record
   try {
-    const result = await gate({ env, fetchImpl, review: (context) => reviewer({ ...context, env }) })
+    const result = await gate({ env, fetchImpl, review: (context) => { record = context.record.entry; return reviewer({ ...context, env }) } })
     const fresh = await api(`/pulls/${number}`)
     if (fresh.state !== 'open' || fresh.head.sha !== sha || (fresh.body || '') !== (current.body || '')) throw new Error('PR 已更新，旧提交结论不能用于当前 head')
     if (result.type === 'submission') {
@@ -36,7 +36,7 @@ export async function runSecurityGate({ env = process.env, fetchImpl = fetch, ga
         `分发：${escape(JSON.stringify(report.distribution))}`,
         escape(report.summary),
         ...report.criteria.map((item) => `- ${item.id}: **${item.status}** — ${escape(item.reason)}（${item.evidence.map((ref) => escape(ref.file)).join(', ')}）`),
-        '此结论仅覆盖上述快照；机器审核不证明 Desktop 实测或完整安全审计。仍需维护者在最新提交上批准。'
+        '此结论仅覆盖上述快照；机器审核不证明 Desktop 实测或完整安全审计。全部目录 CI 通过且投稿未变化后，由独立发布步骤自动合并。'
       ].join('\n\n')
     } else {
       conclusion = 'success'
@@ -47,8 +47,11 @@ export async function runSecurityGate({ env = process.env, fetchImpl = fetch, ga
     summary = `安全审核未完成或失败，禁止视为通过。${escape(error.message).slice(0, 1000)}`
   }
   await api(`/check-runs/${check.id}`, 'PATCH', { status: 'completed', conclusion,
-    output: { title: conclusion === 'success' ? '安全门禁通过；等待维护者批准' : '安全门禁未通过', summary: summary.slice(0, 60000) } })
+    output: { title: conclusion === 'success' ? '安全门禁通过；等待目录 CI 与发布确认' : '安全门禁未通过', summary: summary.slice(0, 60000) } })
   if (env.GITHUB_STEP_SUMMARY) await fs.appendFile(env.GITHUB_STEP_SUMMARY, `${summary}\n`)
+  const publish = conclusion === 'success' && report?.passed === true
+  if (env.GITHUB_OUTPUT) await fs.appendFile(env.GITHUB_OUTPUT, `publish=${publish}\n`)
+  if (publish && env.SECURITY_BRIEF_FILE) await fs.writeFile(env.SECURITY_BRIEF_FILE, JSON.stringify({ repository, number, sha, body: current.body || '', record, evidenceDigest: report.evidenceDigest, model: MODEL }), { mode: 0o600 })
   return { failed: conclusion !== 'success', report }
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {

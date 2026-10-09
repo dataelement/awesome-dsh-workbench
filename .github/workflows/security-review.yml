@@ -4,7 +4,7 @@ on:
     branches: [main]
     types: [opened, synchronize, reopened, ready_for_review, edited]
 permissions:
-  contents: read
+  contents: write
   pull-requests: write
   issues: write
   checks: write
@@ -15,7 +15,7 @@ jobs:
   review:
     name: Run trusted security reviewer
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - name: Check out trusted base code only
         uses: actions/checkout@v4
@@ -39,11 +39,24 @@ jobs:
         if: steps.classify.outputs.review == 'true'
         run: npm install --global @github/copilot@1.0.94
       - name: Probe and review immutable submission evidence
+        id: security
         if: steps.classify.outputs.review == 'true'
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          SECURITY_BRIEF_FILE: ${{ runner.temp }}/workbench-brief.json
           COPILOT_GITHUB_TOKEN: ${{ secrets.MODELS_TOKEN }}
           REPOSITORY: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           CANDIDATE_SHA: ${{ github.event.pull_request.head.sha }}
         run: node scripts/security-pr-gate.mjs
+      - name: Merge reviewed submission and announce to Feishu
+        if: steps.security.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
+          FEISHU_WORKBENCH_WEBHOOK: ${{ secrets.FEISHU_WORKBENCH_WEBHOOK }}
+          SECURITY_BRIEF_FILE: ${{ runner.temp }}/workbench-brief.json
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          CANDIDATE_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/publish-reviewed-workbench.mjs
