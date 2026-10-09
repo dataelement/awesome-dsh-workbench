@@ -179,3 +179,16 @@ test('runtime acceptance is outside static CI criteria; harmless whitespace is a
   result.criteria[0].evidence[0].file = 'invented/path'
   assert.throws(() => validateReview(result, evidence), /identity.*文件不存在/)
 })
+
+test('numbered evidence selects existing bounded nonempty original lines', () => {
+  const result = verdict()
+  const lines = [{file: 'source/client.js', text: 'register\n\nbusiness panel\n'}]
+  for (const item of result.criteria) item.evidence = [{file:'source/client.js',startLine:3,endLine:3}]
+  assert.equal(validateReview(result, lines).passed, true)
+  for (const [startLine,endLine] of [[0,1],[3,2],[1,10],[2,2]]) {
+    result.criteria[0].evidence = [{file:'source/client.js',startLine,endLine}]
+    assert.throws(() => validateReview(result, lines))
+  }
+  result.criteria[0].evidence = [{file:'missing.js',startLine:1,endLine:1}]
+  assert.throws(() => validateReview(result, lines), /文件不存在/)
+})
