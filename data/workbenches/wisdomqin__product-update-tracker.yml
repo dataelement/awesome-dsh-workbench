@@ -1,0 +1,10 @@
+url: https://github.com/wisdomqin/product-update-tracker
+name: 产品更新追踪
+nameEn: Product Update Tracker
+category: research
+description:
+  zh: 每天追踪 GitHub 仓库和公开网页的内容变化，以月历和中文日报集中呈现多个产品的更新。
+  en: Track daily changes across GitHub repositories and public web pages, with a monthly calendar and Chinese update reports.
+screenshots:
+  - https://raw.githubusercontent.com/wisdomqin/product-update-tracker/main/docs/images/overview.webp
+tarball: https://github.com/wisdomqin/product-update-tracker/releases/latest/download/product-update-tracker.tgz
