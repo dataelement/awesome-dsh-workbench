@@ -208,3 +208,9 @@ test('one bounded evidence correction uses the same snapshot and still validates
   await assert.rejects(reviewSubmission({record,generated,pull,env:{COPILOT_GITHUB_TOKEN:'test'},fetchImpl:async()=>new Response(bytes),modelImpl:async()=>{calls++;const v=verdict();v.criteria[0].evidence[0].quote='invented evidence';return v}}), /引文无法匹配/)
   assert.equal(calls,2)
 })
+
+test('real evidence ranges over thirty lines do not cause false rejection', () => {
+  const result = verdict()
+  for (const item of result.criteria) item.evidence = [{file:'source/client.js',startLine:1,endLine:31}]
+  assert.equal(validateReview(result,[{file:'source/client.js',text:Array(31).fill('actual code').join('\n')}]).passed,true)
+})
