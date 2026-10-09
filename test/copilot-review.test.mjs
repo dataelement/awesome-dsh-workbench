@@ -9,6 +9,7 @@ const output = (events = []) => [...events, { type: 'assistant.message', data: {
 test('requires completed JSON output, exact model and no tools or active MCPs', () => {
   assert.deepEqual(parseCopilotOutput(output()), { summary: 'ok' })
   assert.deepEqual(parseCopilotOutput(output([{ type: 'assistant.message', data: { model: MODEL, phase: 'commentary', content: 'Reviewing the evidence', toolRequests: [] } }])), { summary: 'ok' })
+  assert.deepEqual(parseCopilotOutput(output([{ type: 'assistant.message', data: { model: MODEL, content: 'Intermediate analysis', toolRequests: [] } }])), { summary: 'ok' })
   for (const events of [
     [{ type: 'tool.execution_start', data: {} }],
     [{ type: 'model.call_start', data: { model: 'other' } }],

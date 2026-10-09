@@ -20,7 +20,8 @@ export function parseCopilotOutput(output) {
     if (event.type?.startsWith('tool.') || event.type === 'session.error') throw new Error('Copilot 尝试工具调用或返回错误，审核未完成')
     if (event.type === 'assistant.message') {
       if (event.data?.model !== MODEL || event.data?.toolRequests?.length) throw new Error('Copilot 返回工具请求或非指定模型答复，审核未完成')
-      if (event.data.phase === 'commentary') continue
+      // The CLI also emits unlabelled intermediate messages; only final_answer is authoritative.
+      if (event.data.phase === undefined || event.data.phase === 'commentary') continue
       if (event.data.phase !== 'final_answer' || typeof event.data.content !== 'string' || event.data.content.length > 256 * 1024 || content !== undefined) throw new Error('Copilot 没有唯一的最终答复，审核未完成')
       content = event.data.content
     }
