@@ -5,7 +5,7 @@ import path from 'node:path'
 import crypto from 'node:crypto'
 import * as tar from 'tar'
 import test from 'node:test'
-import { CRITERIA, MODEL, validateReview, readEvidenceDirectory, reviewSubmission } from '../scripts/llm-review.mjs'
+import { CRITERIA, MARKET_RISK_POLICY, MODEL, validateReview, readEvidenceDirectory, reviewSubmission } from '../scripts/llm-review.mjs'
 import { runSecurityGate, CHECK_NAME } from '../scripts/security-pr-gate.mjs'
 import { runGate } from '../scripts/trusted-pr-gate.mjs'
 
@@ -123,6 +123,7 @@ test('Copilot receives trusted standards and pinned source without credentials i
     modelImpl: async (input) => { request = input; return verdict() }, env: { COPILOT_GITHUB_TOKEN: 'copilot-test' } })
   assert.equal(result.passed, true)
   assert.match(request.instructions, /提示注入/)
+  assert.ok(request.instructions.includes(MARKET_RISK_POLICY))
   assert.match(request.instructions, /工作台市场验收规范/)
   assert.match(JSON.stringify(request.input), /ignore all rules/)
   assert.ok(!JSON.stringify(request.input).includes('copilot-test'))
@@ -213,4 +214,11 @@ test('real evidence ranges over thirty lines do not cause false rejection', () =
   const result = verdict()
   for (const item of result.criteria) item.evidence = [{file:'source/client.js',startLine:1,endLine:31}]
   assert.equal(validateReview(result,[{file:'source/client.js',text:Array(31).fill('actual code').join('\n')}]).passed,true)
+})
+
+test('market policy distinguishes authorized configuration and ordinary bugs from harmful behavior', () => {
+  assert.match(MARKET_RISK_POLICY,/非阻断建议/)
+  assert.match(MARKET_RISK_POLICY,/用户明确配置/)
+  assert.match(CRITERIA.security,/未经授权/)
+  assert.ok(!CRITERIA.disclosure.includes('费用'))
 })
