@@ -60,7 +60,7 @@ async function fetchJsonFile(fetchImpl, owner, repository, sha, name, required =
   try { return JSON.parse((await readBounded(response, 256 * 1024, name)).toString()) } catch { throw new ProbeError('invalid-manifest', `${name} 不是有效 JSON`) }
 }
 
-async function inspectPackage(fetchImpl, url, { expectedVersion, expectedName, integrity, owner, repository } = {}) {
+export async function inspectPackage(fetchImpl, url, { expectedVersion, expectedName, integrity, owner, repository, inspectFiles } = {}) {
   const response = await fetchImpl(url)
   if (!response.ok) throw new ProbeError('release-unavailable', `Release 下载失败（HTTP ${response.status}）`, { incomplete: response.status === 429 || response.status >= 500 })
   let bytes
@@ -78,6 +78,7 @@ async function inspectPackage(fetchImpl, url, { expectedVersion, expectedName, i
   await fs.mkdir(unpacked)
   const names = []
   let packageManifest
+  let inspection
   try {
     let expandedBytes = 0
     await tar.t({ file: archive, sync: true, onentry: (entry) => {
@@ -102,13 +103,14 @@ async function inspectPackage(fetchImpl, url, { expectedVersion, expectedName, i
     }
     if ((expectedVersion && pkg.version !== expectedVersion) || (expectedName && pkg.name !== expectedName)) throw new ProbeError('package-mismatch', '安装包版本或包名与来源不一致')
     packageManifest = pkg
+    if (inspectFiles) inspection = await inspectFiles({ root, pkg })
   } catch (error) {
     if (error instanceof ProbeError) throw error
     throw new ProbeError('release-invalid', `Release 包检查失败：${error.message}`)
   } finally {
     await fs.rm(directory, { recursive: true, force: true })
   }
-  return { sha256: digest, bytes: bytes.length, version: packageManifest.version }
+  return { sha256: digest, bytes: bytes.length, version: packageManifest.version, ...(inspectFiles ? { inspection } : {}) }
 }
 
 async function resolveDistribution(fetchImpl, entry, owner, repository, commit, pkg, contract) {

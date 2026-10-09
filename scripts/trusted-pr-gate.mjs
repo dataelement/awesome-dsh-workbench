@@ -10,7 +10,7 @@ import { classifyChanges } from './pr-policy.mjs'
 import { buildPublishedCatalog } from './published-catalog.mjs'
 
 // Run only from trusted main code in pull_request_target. Never check out or execute PR files.
-export async function runGate({ env = process.env, fetchImpl = fetch, dataDir = DATA_DIR } = {}) {
+export async function runGate({ env = process.env, fetchImpl = fetch, dataDir = DATA_DIR, review } = {}) {
   const { GITHUB_TOKEN: token, REPOSITORY: repository, PR_NUMBER: number, CANDIDATE_SHA: sha } = env
   if (!token || !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository || '') || !/^[1-9]\d*$/.test(number || '') || !/^[a-f0-9]{40}$/.test(sha || '')) throw new Error('缺少可信运行上下文')
   const headers = { Accept: 'application/vnd.github+json', Authorization: `Bearer ${token}`, 'X-GitHub-Api-Version': '2022-11-28' }
@@ -33,7 +33,7 @@ export async function runGate({ env = process.env, fetchImpl = fetch, dataDir = 
     if (page >= 30) throw new Error('PR 文件过多，无法完整审核')
   }
   const trusted = ['OWNER', 'MEMBER', 'COLLABORATOR'].includes(pull.author_association)
-  const policy = classifyChanges(files, { allowCatalogMaintenance: trusted })
+  const policy = classifyChanges(files, { allowCatalogMaintenance: trusted && !review })
   if (policy.type !== 'submission') {
     await api(pullUrl).then(assertCurrent)
     console.log(policy.type === 'removal' ? '下架范围检查通过；仍需维护者审批。' : '仓库维护 PR：范围检查通过，Catalog CI 负责离线测试。')
@@ -57,9 +57,12 @@ export async function runGate({ env = process.env, fetchImpl = fetch, dataDir = 
       headers: url.startsWith('https://api.github.com/') ? { ...options.headers, Authorization: `Bearer ${token}` } : options.headers
     }) })
     await buildPublishedCatalog([{ record, generated }], [])
-    await api(pullUrl).then(assertCurrent)
+    const reviewResult = review ? await review({ record, generated, pull, fetchImpl }) : undefined
+    const latest = await api(pullUrl)
+    assertCurrent(latest)
+    if (review && (latest.body || '') !== (pull.body || '')) throw new Error('PR 正文已更新，请等待新证据的审核')
     console.log('仓库、截图和安装来源探测通过；仍需维护者核对本机实测记录。')
-    return { type: 'submission' }
+    return { type: 'submission', ...(review ? { review: reviewResult } : {}) }
   } finally {
     await fs.rm(directory, { recursive: true, force: true })
   }
