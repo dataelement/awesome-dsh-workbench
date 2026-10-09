@@ -1,0 +1,12 @@
+url: https://github.com/mfanoffice/text2demo
+name: 文案转演示素材工作台
+nameEn: Text to Demo Workbench
+category: content
+description:
+  zh: 把一段口播文案拆成分镜，生成可逐步入场的演示动画，并出视频标题、标签与文生图三比例封面；本地校验越界/字幕区/动画，支持 8 种视觉主题。
+  en: Split a voice-over script into storyboard pages, render a step-by-step animated deck, and produce video titles, tags and three-ratio AI covers; validates overflow, caption zone and animations locally, with 8 visual themes.
+screenshots:
+  - https://raw.githubusercontent.com/mfanoffice/text2demo/main/docs/screenshots/overview.webp
+  - https://raw.githubusercontent.com/mfanoffice/text2demo/main/docs/screenshots/storyboard.webp
+  - https://raw.githubusercontent.com/mfanoffice/text2demo/main/docs/screenshots/cover.webp
+tarball: https://github.com/mfanoffice/text2demo/releases/latest/download/text2demo.tgz
