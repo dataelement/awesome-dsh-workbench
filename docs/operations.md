@@ -43,4 +43,4 @@ Actions cache 可能被淘汰；冷启动遇到 API 故障会明确输出 unavai
 
 ## 安全审核启用
 
-新增必需 Check Run **Workbench security review**、Actions secret `OPENAI_API_KEY` 及至少一名维护者审批。部署顺序、标准更新和失效处理见[安全审核运行手册](security-review.md)。没有配置分支保护时，失败的 workflow 只是报告，不会实际阻止有权限者直接合并。
+新增必需 Check Run **Workbench security review**、Actions secret `MODELS_TOKEN` 及至少一名维护者审批。部署顺序、标准更新和失效处理见[安全审核运行手册](security-review.md)。没有配置分支保护时，失败的 workflow 只是报告，不会实际阻止有权限者直接合并。

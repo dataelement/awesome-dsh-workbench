@@ -67,6 +67,6 @@ screenshots:
 
 ## GPT-6 Luna 内容与安全门禁
 
-新增或修改工作台还须通过 [Workbench security review](docs/security-review.md)。公开源码、实际安装包的文本和截图会发送到 OpenAI 的 gpt-6-luna 审阅。请在 PR 描述中提供本次最终来源与精确版本/commit、包校验结果、Desktop 版本与系统架构、逐项本机自测和打开截图证据，以及外部依赖/费用/数据位置。未验证内容如实标记；机器不会替作者运行 Desktop。
+新增或修改工作台还须通过 [Workbench security review](docs/security-review.md)。公开源码、实际安装包的文本和截图会通过 Copilot 发送到 gpt-6-luna 审阅。请在 PR 描述中提供本次最终来源与精确版本/commit、包校验结果、Desktop 版本与系统架构、逐项本机自测和打开截图证据，以及外部依赖/费用/数据位置。未验证内容如实标记；机器不会替作者运行 Desktop。
 
 机器通过之后仍须维护者批准最新提交；证据不足或网络/API 错误都不能合并。新提交或 PR 正文更新触发重新审核，合并前核对最新运行。
