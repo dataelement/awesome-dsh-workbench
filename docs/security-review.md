@@ -1,6 +1,6 @@
 # 工作台安全与标准审核
 
-投稿新增或修改工作台时，`Workbench security review` 从可信 base 代码运行，重复执行实际来源探测，并用 Copilot CLI 1.0.94 的 **gpt-6-luna** 审阅完整有界文本材料和截图。不 checkout、构建、安装或运行作者代码；显式设置空工具列表，禁用内置 MCP、用户配置和自定义指令；没有模型 shell 或自动合并能力。模型不能批准 PR。
+投稿新增或修改工作台时，`Workbench security review` 从可信 base 代码运行，重复执行实际来源探测，并用 Copilot CLI 1.0.94 的 **gpt-6-luna** 审阅完整有界文本材料和截图。不 checkout、构建、安装或运行作者代码；显式设置空工具列表，禁用内置 MCP、用户配置和自定义指令；没有模型 shell 或自动合并能力。模型不能批准 PR。使用 medium 推理强度，单次审核六分钟超时；超时阻断。
 
 ## 审核标准
 

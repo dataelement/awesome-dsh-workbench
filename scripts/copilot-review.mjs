@@ -36,7 +36,7 @@ export async function runCopilotReview({ instructions, input, screenshots = [], 
   if (!env.COPILOT_GITHUB_TOKEN) throw new Error('缺少 COPILOT_GITHUB_TOKEN（Actions Secret MODELS_TOKEN）；审核未执行')
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'workbench-copilot-'))
   try {
-    const args = ['--model', MODEL, '--reasoning-effort', 'high', '--available-tools=', '--disable-builtin-mcps',
+    const args = ['--model', MODEL, '--reasoning-effort', 'medium', '--available-tools=', '--disable-builtin-mcps',
       '--no-custom-instructions', '--no-auto-update', '--no-ask-user', '--no-remote-export', '--no-bash-env',
       '--log-level', 'none', '--output-format', 'json', '--stream', 'off', '-s']
     for (const [index, image] of screenshots.entries()) {
@@ -64,7 +64,7 @@ export async function runCopilotReview({ instructions, input, screenshots = [], 
           reject(error)
         } else resolve(stdout)
       }
-      const timer = setTimeout(() => finish(new Error('Copilot 审核超时，未完成')), 240_000)
+      const timer = setTimeout(() => finish(new Error('Copilot 审核超时，未完成')), 360_000)
       child.stdout.on('data', (chunk) => {
         size += chunk.length
         if (size > 16 * 1024 * 1024) return finish(new Error('Copilot 审核输出超限'))
