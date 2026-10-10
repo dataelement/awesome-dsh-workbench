@@ -1,0 +1,9 @@
+url: https://github.com/oil-oil/dsh-oil-creator
+name: Oil 内容创作工作台
+category: content
+description:
+  zh: 管理本地视频内容、脚本、字幕、封面和发布状态，通过原生会话推进创作流程。
+  en: Manage local video projects, scripts, subtitles, covers, and publishing status through native creator conversations.
+screenshots:
+  - https://raw.githubusercontent.com/oil-oil/dsh-oil-creator/main/docs/images/workbench-overview.jpg
+tarball: https://github.com/oil-oil/dsh-oil-creator/releases/latest/download/dsh-oil-creator.tgz
