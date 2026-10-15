@@ -1,0 +1,11 @@
+url: https://github.com/andoaidlaksldk/dsh-mind-workbench
+name: DSH 思维导图工作台
+nameEn: DSH Mind Workbench
+category: productivity
+description:
+  zh: 在 DSH Desktop 里创建、编辑与导出思维导图：完整画布支持节点操作、主题、结构、图标、关联线、概要、外框、标记、待办、公式、演示模式、大纲、小地图、水印与搜索替换，并提供导图文件（.smm，可再次导入）、图片（PNG）、SVG、PDF、Markdown、XMind、Txt、JSON 八种导出格式；文档保存在 DSH 数据目录，并可在会话中让 Agent 直接读写成导图。
+  en: Create, edit and export mind maps inside DSH Desktop, with a full canvas (node editing, themes, layouts, icons, relationships, summaries, boundaries, markers, tasks, formulas, presentation mode, outline, minimap, watermark and find-and-replace) and eight export formats (mind-map file .smm, Image PNG, SVG, PDF, Markdown, XMind, Txt, JSON). Documents are stored in the DSH data directory, and the agent can read and write maps from the conversation.
+screenshots:
+  - https://raw.githubusercontent.com/andoaidlaksldk/dsh-mind-workbench/main/docs/screenshots/overview.png
+  - https://raw.githubusercontent.com/andoaidlaksldk/dsh-mind-workbench/main/docs/screenshots/radial.png
+tarball: https://github.com/andoaidlaksldk/dsh-mind-workbench/releases/latest/download/dsh-mind-workbench.tgz
