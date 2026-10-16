@@ -1,0 +1,11 @@
+url: https://github.com/andoaidlaksldk/DSHDrawWorkbench
+name: DSH 画板
+nameEn: DSH Draw Workbench
+category: productivity
+description:
+  zh: 在 DSH Desktop 里画流程图、架构图、思维导图与手绘草图：形状与连线（直线、肘线、曲线）、画笔与橡皮擦、插入图片、Mermaid 与 Markdown 转画板，导出 PNG / SVG 图片与 .drawnix 文件；多块画板保存在 DSH 数据目录，并可在会话里让 Agent 直接读写成画板。
+  en: Sketch flowcharts, architecture diagrams, mind maps and freehand drawings inside DSH Desktop, with shapes and connectors (straight, elbow, curve), pen and eraser, images, Mermaid and Markdown import, and export to PNG / SVG images and .drawnix files. Boards are stored in the DSH data directory, and the agent can read and write boards from the conversation.
+screenshots:
+  - https://raw.githubusercontent.com/andoaidlaksldk/DSHDrawWorkbench/main/docs/screenshots/overview.png
+  - https://raw.githubusercontent.com/andoaidlaksldk/DSHDrawWorkbench/main/docs/screenshots/architecture.png
+tarball: https://github.com/andoaidlaksldk/DSHDrawWorkbench/releases/latest/download/dsh-draw-workbench.tgz
