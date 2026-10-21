@@ -11,9 +11,9 @@ import { readBounded } from './media-lib.mjs'
 
 export const REVIEW_LIMITATIONS = '本次仅执行静态材料审核。未验证 Desktop 安装、启动、交互、重启恢复、跨平台兼容、截图实拍与完整功能；这些项目不参与通过判定。'
 
-export const MAX_CONTEXT_SIZE = 500_000
-export const MAX_BATCH_SIZE = 1_000_000
-export const MAX_REQUEST_CHARS = 1_500_000
+export const MAX_CONTEXT_SIZE = 100_000
+export const MAX_BATCH_SIZE = 350_000
+export const MAX_REQUEST_CHARS = 450_000
 
 export const MARKET_RISK_POLICY = '市场审核不是通用代码质量或漏洞审计。安全/数据项的 fail 或 needs_human 必须基于材料中明确存在的恶意载荷、凭据窃取、隐蔽外传、未经授权的越权访问、主动破坏用户数据或危险安装行为；未见确凿恶意证据时，不得基于假设、推测或静态材料无法穷举运行流程而判定 needs_human 或 fail，必须直接判定为 pass，仅在 reason 中做非阻断安全提示。用户明确配置的网址、模型及正常业务请求不因可配置能力本身而拒绝。缺少 DNS 绑定等防御写法、推测性利用链、异常恢复/保存逻辑等一般 bug、UI 可选业务图标与装饰缺失以及未披露模型费用等所有改进建议均仅作非阻断建议，绝对不作为阻塞项，可在 reason 或 summary 提示，状态仍按 pass 判定。通过宿主 ctx.llm 使用用户当前选择的模型属于已授权正常业务能力，不因宿主模型可能为云服务、缺少另行说明或对本地存储表述的歧义而阻断；披露项仅对作者新增的独立外部服务、特殊权限或明确隐蔽的数据去向按规范检查。可信 probe 已校验实际发布包的 package.json 及安装契约，不能以不存在的字段缺失否定通过的确定性检查；应先完整读取对应 manifest。此策略不豁免材料中明确存在的恶意或未经授权行为，也不豁免安装契约、身份或真实秘密检查。'
 
@@ -138,7 +138,7 @@ export function validateReview(result, evidence) {
       reference.file = file
       if (reference.startLine !== undefined) {
         const lines = sources.get(reference.file).split('\n')
-        if (!Number.isInteger(reference.startLine) || !Number.isInteger(reference.endLine) || reference.startLine < 1 || reference.endLine < reference.startLine || reference.endLine > lines.length || !lines.slice(reference.startLine - 1, reference.endLine).join('\n').trim()) throw referenceError(`审核项 ${item.id} 引用行号无效：${reference.startLine}–${reference.endLine}，文件共 ${lines.length} 行，须为 1 起始、连续非空`)
+        if (!Number.isInteger(reference.startLine) || !Number.isInteger(reference.endLine) || reference.startLine < 1 || reference.endLine < reference.startLine || reference.endLine > lines.length || !lines.slice(reference.startLine - 1, reference.endLine).join('\n').trim()) throw referenceError(`审核项 ${item.id} 引用的文件 ${reference.file} 行号无效：${reference.startLine}–${reference.endLine}，文件共 ${lines.length} 行，须为 1 起始、连续非空`)
         continue
       }
       if (typeof reference.quote !== 'string' || normalize(reference.quote).length < 4 || reference.quote.length > 1000 || !normalize(sources.get(reference.file)).includes(normalize(reference.quote))) throw referenceError(`审核项 ${item.id} 引文无法匹配原文（仅忽略空白差异）`)
@@ -151,7 +151,7 @@ export function validateReview(result, evidence) {
 // sampling or dependency folding: installed dependency code is reviewed too.
 export function createReviewBatches(promptEvidence, evidence = promptEvidence) {
   const originals = new Map(evidence.map(item => [item.file, item.text]))
-  const contextPattern = /^(?:submission\/.*|.*\/(?:package\.json|cordis\.patch\.ya?ml|README(?:\.md)?|LICENSE(?:\.(?:md|txt))?|dsh\/(?:index\.[cm]?[jt]sx?|manifest\.json)))$/i
+  const contextPattern = /^(?:submission\/.*|.*\/(?:package\.json|cordis\.patch\.ya?ml|README(?:\.md)?|LICENSE(?:\.(?:md|txt))?|dsh\/.*))$/i
   const context = [], pieces = []
   let contextChars = 2 // JSON array brackets
   // Deduplicate only whole byte-identical text, never regions or package names.
@@ -172,9 +172,12 @@ export function createReviewBatches(promptEvidence, evidence = promptEvidence) {
   for (const item of unique) {
     const original = originals.get(item.file)
     const validations = (item.identicalFiles || [item.file]).map(file => ({ file, text: original }))
+    const isMandatory = item.file.startsWith('submission/')
     const contextCost = JSON.stringify(item).length + (context.length ? 1 : 0)
+    if (isMandatory) {
+      context.push({ prompt: item, validation: validations }); contextChars += contextCost; continue
+    }
     // Preserve every file: context overflow is reviewed as ordinary pieces.
-    // Reserve room for a complete 60k piece within the existing 150k budget.
     if (contextPattern.test(item.file) && JSON.stringify(item).length < 30_000 && contextChars + contextCost <= 80_000) {
       context.push({ prompt: item, validation: validations }); contextChars += contextCost; continue
     }

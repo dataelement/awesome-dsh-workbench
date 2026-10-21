@@ -324,15 +324,17 @@ test('any blocking chunk prevents aggregated approval; incomplete and transport 
 })
 
 
-test('unbounded batch count fails before any model request', () => {
+test('unbounded batch count and shared context fail before any model request', () => {
   const files=Array.from({length:161},(_,i)=>({file:`artifact/${i}.js`,text:`${i}`+'a'.repeat(190000)}))
   assert.throws(()=>createReviewBatches(files), /80 个分块/)
+  const context=Array.from({length:10},(_,i)=>({file:`submission/${i}`,text:`${i}`+'a'.repeat(20000)}))
+  assert.throws(()=>createReviewBatches(context), /共享审核上下文/)
 })
 
 
 test('each batch repeats global submission manifest and README context', () => {
  const context=[{file:'submission/probe',text:'pinned artifact manifest'}, {file:'submission/pr',text:'submission purpose'}, {file:'source/package.json',text:'{"name":"panel"}'},{file:'source/README.md',text:'user authorized scope'}]
- const data=[...context,{file:'artifact/bundle.js',text:'z'.repeat(1500000)}]
+ const data=[...context,{file:'artifact/bundle.js',text:'z'.repeat(800000)}]
  const batches=createReviewBatches(data)
  assert.ok(batches.length>1)
  for(const batch of batches) for(const item of context) assert.ok(batch.prompt.some(other=>other.file===item.file&&other.text===item.text))
@@ -428,7 +430,7 @@ test('dsh business code is batched as pieces instead of shared context, while en
 
 
 test('shared context overflow is fully reviewed within existing batch budgets', () => {
-  const files = Array.from({ length: 12 }, (_, i) => ({
+  const files = Array.from({ length: 24 }, (_, i) => ({
     file: 'source/dsh/module-' + i + '.mjs',
     text: '// module ' + i + '\n' + 'x'.repeat(20000)
   }))
@@ -436,7 +438,7 @@ test('shared context overflow is fully reviewed within existing batch budgets', 
   const prompt = files.map(item => ({ ...item, text: item.text.split('\n').map((line, i) => '[L' + (i + 1) + '] ' + line).join('\n') }))
   const batches = createReviewBatches(prompt, files)
   assert.ok(batches.length > 1)
-  for (const batch of batches) assert.ok(JSON.stringify(batch.prompt).length <= 150000)
+  for (const batch of batches) assert.ok(JSON.stringify(batch.prompt).length <= MAX_BATCH_SIZE)
   for (const file of files) {
     assert.ok(batches.some(batch => batch.validation.some(item => item.file === file.file && item.text === file.text)), file.file)
     assert.ok(batches.some(batch => batch.prompt.some(item => item.identicalFiles.includes(file.file) && item.text === prompt.find(p => p.file === file.file).text)), file.file)
