@@ -1,0 +1,12 @@
+url: https://github.com/caisiyang123/llm-api-perf-workbench
+name: 大模型 API 质量台
+nameEn: LLM API Quality Workbench
+category: development
+description:
+  zh: 本地压测大模型 API 的 TTFT、TPOT、RPS、并发曲线、P99 与 SLO 边界；双端点一致性校验、10 个标准质量抽查方案、计费与混推理审计。
+  en: Local LLM API benchmarking for TTFT, TPOT, RPS, concurrency curves, P99 and SLO; dual-endpoint consistency checks, 10 quality test plans, billing and mixing audits.
+screenshots:
+  - https://raw.githubusercontent.com/caisiyang123/llm-api-perf-workbench/main/docs/images/overview.png
+  - https://raw.githubusercontent.com/caisiyang123/llm-api-perf-workbench/main/docs/images/test-plans.png
+  - https://raw.githubusercontent.com/caisiyang123/llm-api-perf-workbench/main/docs/images/benchmark.png
+tarball: https://github.com/caisiyang123/llm-api-perf-workbench/releases/download/v1.3.2/dsh-llm-api-perf-workbench-1.3.2.tgz
