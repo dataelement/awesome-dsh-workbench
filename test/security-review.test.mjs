@@ -404,12 +404,13 @@ test('buildReviewComment creates actionable PR comment with blocking items on fa
   assert.match(comment, /THIRD-PARTY-NOTICES\.md/)
   assert.equal(buildReviewComment({ conclusion: 'success', report, sha: 'abcdef1' }), null)
 
-  const sizeComment = buildReviewComment({ conclusion: 'failure', summary: 'Release 包（上限 8 MiB） 超过 8388608 bytes', sha: '173aab2289ff' })
+  const sizeComment = buildReviewComment({ conclusion: 'failure', summary: 'Release 包（上限 32 MiB） 超过 33554432 bytes', sha: '173aab2289ff' })
   assert.ok(sizeComment)
   assert.match(sizeComment, /问题原因：/)
   assert.match(sizeComment, /解决问题建议：/)
-  assert.match(sizeComment, /8388608|8\s*MiB/)
+  assert.match(sizeComment, /32\s*MiB/)
   assert.match(sizeComment, /tarball/)
+  assert.doesNotMatch(sizeComment, /sha256/)
 })
 
 test('dsh business code is batched as pieces instead of shared context, while entrypoints remain in context', () => {

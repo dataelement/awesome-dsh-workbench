@@ -15,6 +15,7 @@ export class ProbeError extends Error {
   }
 }
 
+export const MAX_FILE_BYTES = 8 * 1024 * 1024
 export const MAX_UNPACKED_BYTES = 64 * 1024 * 1024
 
 async function responseJson(response, label) {
@@ -64,7 +65,7 @@ export async function inspectPackage(fetchImpl, url, { expectedVersion, expected
   const response = await fetchImpl(url)
   if (!response.ok) throw new ProbeError('release-unavailable', `Release 下载失败（HTTP ${response.status}）`, { incomplete: response.status === 429 || response.status >= 500 })
   let bytes
-  try { bytes = await readBounded(response, MAX_PACKAGE_BYTES, 'Release 包（上限 8 MiB）') }
+  try { bytes = await readBounded(response, MAX_PACKAGE_BYTES, `Release 包（上限 ${MAX_PACKAGE_BYTES / 1024 / 1024} MiB）`) }
   catch (error) { throw new ProbeError('release-invalid', error.message) }
   const digest = crypto.createHash('sha256').update(bytes).digest('hex')
   if (integrity) {
@@ -85,7 +86,7 @@ export async function inspectPackage(fetchImpl, url, { expectedVersion, expected
       names.push(entry.path)
       if (!['File', 'Directory'].includes(entry.type)) throw new Error(`不允许 ${entry.type} 条目`)
       expandedBytes += entry.size || 0
-      if (entry.size > 8 * 1024 * 1024 || expandedBytes > MAX_UNPACKED_BYTES || names.length > 500) throw new Error('解包内容超过安全上限')
+      if (entry.size > MAX_FILE_BYTES || expandedBytes > MAX_UNPACKED_BYTES || names.length > 500) throw new Error('解包内容超过安全上限')
     } })
     if (names.some((name) => !safeRelativePath(name.replace(/\/$/, '')))) throw new Error('包含不安全路径')
     await tar.x({ file: archive, cwd: unpacked, strict: true, preservePaths: false })
@@ -144,7 +145,7 @@ async function resolveDistribution(fetchImpl, entry, owner, repository, commit, 
   for (const file of [contract.patch, contract.entry]) {
     const response = await fetchImpl(sourceFileUrl(owner, repository, commit, file))
     if (!response.ok) throw new ProbeError('invalid-manifest', `源码缺少 ${file}`, { incomplete: response.status >= 500 || response.status === 429 })
-    await readBounded(response, MAX_PACKAGE_BYTES, file)
+    await readBounded(response, MAX_FILE_BYTES, file)
   }
   return { type: 'github-source', url: entry.url.replace(/\/$/, ''), commit, version: pkg.version }
 }

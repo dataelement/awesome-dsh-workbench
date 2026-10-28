@@ -1,7 +1,7 @@
 import sharp from 'sharp'
 
 export const MAX_IMAGE_BYTES = 2 * 1024 * 1024
-export const MAX_PACKAGE_BYTES = 8 * 1024 * 1024
+export const MAX_PACKAGE_BYTES = 32 * 1024 * 1024
 export const MAX_IMAGE_PIXELS = 16 * 1024 * 1024
 
 // Stop while streaming, not after allocating an arbitrarily large response.
