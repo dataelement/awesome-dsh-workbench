@@ -1,0 +1,9 @@
+url: https://github.com/xyb-openharness-dsh-plugins/find-museum
+name: 寻馆
+nameEn: Museum Atlas
+category: other
+description:
+  zh: 发现目的地及周边博物馆，收藏美食与景点，编排多日路线，导出路书或交给原生 Agent 继续完善。
+  en: Discover museums near a destination, collect places, arrange multi-day itineraries, and export travel guides or refine them with the native Agent.
+screenshots:
+  - https://raw.githubusercontent.com/xyb-openharness-dsh-plugins/find-museum/24d2aa7de6659c3341b2a708ef70a4c43e048236/demo/full/overview-0.2.4.jpg
