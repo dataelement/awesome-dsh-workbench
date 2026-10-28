@@ -5,6 +5,10 @@ import { pathToFileURL } from 'node:url'
 import { runGate } from './trusted-pr-gate.mjs'
 import { reviewSubmission, MODEL } from './llm-review.mjs'
 
+import { MAX_PACKAGE_BYTES } from './media-lib.mjs'
+
+const packageLimit = `${MAX_PACKAGE_BYTES / 1024 / 1024} MiB`
+
 export const CHECK_NAME = 'Workbench security review'
 const escape = (value) => String(value).replace(/[<>&`]/g, ' ').replace(/@/g, '＠')
 
@@ -38,10 +42,10 @@ export const CRITERIA_ADVICE = {
 
 export function categorizeGateError(rawSummary) {
   const summary = (rawSummary || '').replace(/^安全审核未完成或失败，禁止视为通过。\s*/, '').trim()
-  if (/超过.*(?:8388608|bytes)|上限\s*8\s*MiB/i.test(summary)) {
+  if (/Release 包（上限\s*[\d.]+\s*MiB）\s*超过\s*\d+\s*bytes/i.test(summary)) {
     return {
-      reason: '工作台分发包体积超过了平台规定的上限（8 MiB）。检测到当前条目 YAML 可能未配置独立的 `tarball` 发布包地址，门禁默认拉取了 GitHub 仓库的完整源码包（包含大型测试数据、高分辨率图片等非运行时资源），导致整体体积超出限制。',
-      advice: '1. 推荐在工作台仓库的 GitHub Release 中构建并上传轻量化打包的 `.tgz` / `.tar.gz`（仅包含 `package.json`、运行时代码 `dist/` 或 `lib/`、必需资源及开源协议）。\n2. 在 PR 的条目 YAML 中添加 `tarball: <Release 下载直链>` 以及对应的 `sha256: <文件哈希>`。\n3. 检查并清理仓库中的大文件（如 PDF 文档、未压缩大图、大型数据集等），确保打包体积在 8 MiB 以内。'
+      reason: '工作台分发包体积超过了平台规定的上限（' + packageLimit + '）。检测到当前条目 YAML 可能未配置独立的 `tarball` 发布包地址，门禁默认拉取了 GitHub 仓库的完整源码包（包含大型测试数据、高分辨率图片等非运行时资源），导致整体体积超出限制。',
+      advice: '1. 推荐在工作台仓库的 GitHub Release 中构建并上传轻量化打包的 `.tgz` / `.tar.gz`（仅包含 `package.json`、运行时代码 `dist/` 或 `lib/`、必需资源及开源协议）。\n2. 在 PR 的条目 YAML 中添加 `tarball: <Release 下载直链>`。\n3. 检查并清理仓库中的大文件（如 PDF 文档、未压缩大图、大型数据集等），确保打包体积在 ' + packageLimit + ' 以内。'
     }
   }
   if (/Copilot|MODEL_ERROR|非 JSON|未闭合/i.test(summary)) {

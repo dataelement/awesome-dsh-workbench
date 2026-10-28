@@ -7,7 +7,8 @@ import path from 'node:path'
 import test from 'node:test'
 import * as tar from 'tar'
 import sharp from 'sharp'
-import { MAX_UNPACKED_BYTES, probeEntry, ProbeError } from '../scripts/probe-lib.mjs'
+import { MAX_FILE_BYTES, MAX_UNPACKED_BYTES, inspectPackage, probeEntry, ProbeError } from '../scripts/probe-lib.mjs'
+import { MAX_PACKAGE_BYTES } from '../scripts/media-lib.mjs'
 import { buildPublishedCatalog, validatePublishedCatalog } from '../scripts/published-catalog.mjs'
 import { generateCatalog } from '../scripts/catalog-lib.mjs'
 
@@ -22,12 +23,13 @@ test('permits up to 64 MiB of unpacked package contents', () => {
   assert.equal(MAX_UNPACKED_BYTES, 64 * 1024 * 1024)
 })
 
-async function archive({ version = '1.2.3', name = pkg.name, repository = pkg.repository } = {}) {
+async function archive({ version = '1.2.3', name = pkg.name, repository = pkg.repository, files = {} } = {}) {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'dsh-package-'))
   try {
     const root = path.join(directory, 'package')
     await fs.mkdir(root)
     await fs.writeFile(path.join(root, 'package.json'), JSON.stringify({ ...pkg, name, version, repository }))
+    for (const [name, content] of Object.entries(files)) await fs.writeFile(path.join(root, name), content)
     await fs.writeFile(path.join(root, 'client.js'), '')
     await fs.writeFile(path.join(root, 'cordis.patch.yml'), '- insert: []')
     const file = path.join(directory, 'package.tgz')
@@ -116,7 +118,7 @@ test('rejects package identity mismatch and oversized Release', async () => {
   const bytes = await archive({ repository: 'https://github.com/other/repo' })
   await assert.rejects(() => probeEntry(record(releaseUrl), fixture({ bytes })), /repository/)
   const mock = fixture({ releaseAssets: [{ name: 'workbench.tgz', browser_download_url: releaseUrl }] })
-  await assert.rejects(() => probeEntry(record(releaseUrl), { fetchImpl: (url) => url === releaseUrl ? new Response('x', { headers: { 'content-length': String(8 * 1024 * 1024 + 1) } }) : mock.fetchImpl(url) }), (error) => error.code === 'release-invalid' && !error.incomplete)
+  await assert.rejects(() => probeEntry(record(releaseUrl), { fetchImpl: (url) => url === releaseUrl ? new Response('x', { headers: { 'content-length': String(MAX_PACKAGE_BYTES + 1) } }) : mock.fetchImpl(url) }), (error) => error.code === 'release-invalid' && !error.incomplete)
 })
 
 test('network failure is incomplete, not evidence that npm is absent', async () => {
@@ -247,4 +249,36 @@ test('an unprobed generated structure cannot be published', async () => {
   await assert.rejects(() => validatePublishedCatalog(generateCatalog([], [])), /协议/)
   await assert.rejects(() => buildPublishedCatalog([{ record: record(), error: { status: 'incomplete' } }], []), /未完成/)
   assert.equal((await buildPublishedCatalog([], [])).kind, 'catalog')
+})
+
+
+test('accepts archives above the previous 8 MiB cap and validates the published size', async () => {
+  const bytes = await archive({ files: { 'a.bin': crypto.randomBytes(5 * 1024 * 1024), 'b.bin': crypto.randomBytes(5 * 1024 * 1024) } })
+  assert.ok(bytes.length > 8 * 1024 * 1024 && bytes.length < MAX_PACKAGE_BYTES)
+  const generated = await probeEntry(record(releaseUrl), fixture({ bytes }))
+  const catalog = await buildPublishedCatalog([{ record: record(releaseUrl), generated }], [])
+  await validatePublishedCatalog(catalog)
+})
+
+test('larger downloads retain the 8 MiB per-file extraction limit', async () => {
+  const bytes = await archive({ files: { 'oversized.bin': Buffer.alloc(MAX_FILE_BYTES + 1) } })
+  await assert.rejects(() => inspectPackage(async () => new Response(bytes), releaseUrl), /解包内容超过安全上限/)
+})
+
+test('source entry downloads retain the 8 MiB per-file limit', async () => {
+  const mock = fixture()
+  await assert.rejects(() => probeEntry(record(), { fetchImpl: (url) => url.endsWith('/client.js')
+    ? new Response('x', { headers: { 'content-length': String(MAX_FILE_BYTES + 1) } }) : mock.fetchImpl(url) }), /超过 8388608 bytes/)
+})
+
+test('published distribution size boundaries match the download limit', async () => {
+  for (const npm of [false, true]) {
+    const bytes = await archive()
+    const generated = await probeEntry(record(releaseUrl), fixture({ bytes, npm }))
+    generated.distribution.bytes = MAX_PACKAGE_BYTES
+    const catalog = await buildPublishedCatalog([{ record: record(releaseUrl), generated }], [])
+    await validatePublishedCatalog(catalog)
+    generated.distribution.bytes++
+    await assert.rejects(() => buildPublishedCatalog([{ record: record(releaseUrl), generated }], []), /协议/)
+  }
 })
