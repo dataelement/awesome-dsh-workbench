@@ -1,0 +1,12 @@
+url: https://github.com/liuhao11223/githb-ranking
+name: GitHub 排名
+nameEn: GitHub Rankings
+category: development
+description:
+  zh: 查看每天 GitHub 热门仓库与 DSH 插件排名，打开仓库看详情与趋势，并订阅关注仓库/作者的变化。
+  en: Track daily trending GitHub repos and DSH plugin rankings, view repo details and trends, and follow changes to repos or authors.
+screenshots:
+  - https://raw.githubusercontent.com/liuhao11223/githb-ranking/main/docs/screenshots/today.png
+  - https://raw.githubusercontent.com/liuhao11223/githb-ranking/main/docs/screenshots/plugins.png
+  - https://raw.githubusercontent.com/liuhao11223/githb-ranking/main/docs/screenshots/tracking.png
+tarball: https://github.com/liuhao11223/githb-ranking/releases/latest/download/githb-ranking.tgz
