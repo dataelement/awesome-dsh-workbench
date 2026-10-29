@@ -1,0 +1,10 @@
+url: https://github.com/lineex/research-dag-workbench
+name: 科研项目工作台
+nameEn: Research DAG Workbench
+category: research
+description:
+  zh: 鱼骨式科研项目工作台：鱼头规划目标，主脊骨推进阶段，鱼刺实时探索并融合 DSH 原生交互式会话；成果满意后一键回连主骨。
+  en: Fishbone research DAG workbench with native DSH interactive conversation integration and milestone branch management.
+screenshots:
+  - https://raw.githubusercontent.com/lineex/research-dag-workbench/main/docs/images/overview.png
+  - https://raw.githubusercontent.com/lineex/research-dag-workbench/main/docs/images/detail.png
