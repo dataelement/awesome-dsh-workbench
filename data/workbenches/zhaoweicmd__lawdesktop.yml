@@ -1,0 +1,10 @@
+url: https://github.com/zhaoweicmd/lawdesktop
+name: 律案工作台
+nameEn: LawCase Workbench
+category: productivity
+description:
+  zh: 把法律材料整理成可追溯的台账：材料版本、事实出处、条款级审核意见、五道验收与交付包，法律判断仍由律师作出。
+  en: Turns case files into a traceable ledger of material versions, fact sources, clause-level opinions, five-gate checks and delivery packages, while leaving legal judgment to the lawyer.
+screenshots:
+  - https://raw.githubusercontent.com/zhaoweicmd/lawdesktop/main/docs/images/01-overview.png
+tarball: https://github.com/zhaoweicmd/lawdesktop/releases/latest/download/lawcase-workbench.tgz
