@@ -1,0 +1,11 @@
+url: https://github.com/caisiyang123/kimi-signature-workbench
+name: Kimi 官转核验
+nameEn: Kimi Relay Verifier
+category: development
+description:
+  zh: 验证第三方端点是否真的转发到 Kimi 官方 API：签名回源校验、20 个协议脚本双侧比对、tokenizer 指纹、计费一致性与逐脚本延迟，产出含根因分析的可读报告。
+  en: Verify whether a third-party endpoint truly relays to the official Kimi API via signature verification, 20 bilateral protocol probes, tokenizer fingerprinting, billing parity and per-script latency, with a readable root-cause report.
+screenshots:
+  - https://raw.githubusercontent.com/caisiyang123/kimi-signature-workbench/main/docs/images/report-overview.webp
+  - https://raw.githubusercontent.com/caisiyang123/kimi-signature-workbench/main/docs/images/evidence-checklist.webp
+tarball: https://github.com/caisiyang123/kimi-signature-workbench/releases/latest/download/kimi-signature-workbench.tgz
