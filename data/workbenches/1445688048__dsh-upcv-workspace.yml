@@ -1,0 +1,14 @@
+url: https://github.com/1445688048/dsh-upcv-workspace
+name: 求职工作台
+nameEn: Job Search Workbench
+category: productivity
+description:
+  zh: '在本机管理简历、模拟面试与岗位检索：14 套简历模板、题库复盘、JD 对齐，并可通过 DSH 会话采集真实岗位；AI 走宿主模型，数据保存在本机。'
+  en: 'Manage resumes, mock interviews, and job search locally: 14 resume templates, question-bank review, JD alignment, and real job collection through DSH sessions; AI runs on the host model and data stays local.'
+screenshots:
+  - https://raw.githubusercontent.com/1445688048/dsh-upcv-workspace/main/docs/screenshots/03-editor.png
+  - https://raw.githubusercontent.com/1445688048/dsh-upcv-workspace/main/docs/screenshots/04-jobs.png
+  - https://raw.githubusercontent.com/1445688048/dsh-upcv-workspace/main/docs/screenshots/05-interview.png
+  - https://raw.githubusercontent.com/1445688048/dsh-upcv-workspace/main/docs/screenshots/02-resumes.png
+  - https://raw.githubusercontent.com/1445688048/dsh-upcv-workspace/main/docs/screenshots/01-home.png
+tarball: https://github.com/1445688048/dsh-upcv-workspace/releases/latest/download/dsh-upcv-workspace.tgz
