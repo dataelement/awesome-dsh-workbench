@@ -3,9 +3,10 @@ name: 智能体团队 · 技能管理工作台
 nameEn: Agent Team Skill Workbench
 category: operations
 description:
-  zh: 具名智能体团队工作台：每个成员有独立表情与头像、一组可回退的模型路由；内置 agency-agents-zh 的 313 个可选角色与「项目部」六组 15 人预设，支持分组视图、执行方→审核员→复核员三级审批流水线，并管理本机共享技能库。
-  en: A named-agent team workbench where each member has its own emoji and avatar plus fallback model routes, with 313 selectable agency-agents-zh roles, a six-group 15-person project-department preset, grouped views, a three-stage producer-auditor-reviewer pipeline and a local shared skill library.
+  zh: 具名智能体团队工作台：每个成员有独立表情与头像、一组可回退的模型路由，可单独私聊或建群让管理员 @ 成员分活；内置 agency-agents-zh 的 313 个可选角色与「项目部」六组 15 人预设，支持分组视图、三级审批流水线与本机共享技能库。
+  en: A named-agent team workbench where each member has its own emoji and avatar plus fallback model routes, with one-to-one chats, group chats where an admin delegates via @mentions, 313 selectable agency-agents-zh roles, a six-group 15-person project-department preset, grouped views, a three-stage approval pipeline and a local shared skill library.
 screenshots:
   - https://raw.githubusercontent.com/narkco-kang/dsh-team-workbench/main/market/screenshots/team.png
+  - https://raw.githubusercontent.com/narkco-kang/dsh-team-workbench/main/market/screenshots/chat.png
   - https://raw.githubusercontent.com/narkco-kang/dsh-team-workbench/main/market/screenshots/roles.png
 tarball: https://github.com/narkco-kang/dsh-team-workbench/releases/latest/download/dsh-team-workbench.tgz
