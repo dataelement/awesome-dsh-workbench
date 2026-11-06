@@ -3,8 +3,8 @@ name: 智能体团队 · 技能管理工作台
 nameEn: Agent Team Skill Workbench
 category: operations
 description:
-  zh: 具名智能体团队工作台：每个成员有动态表情头像与一组可回退的模型路由，可私聊或建群；群里支持管理员先答、按内容自动挑人、只回应 @，并按接力层数让成员互相 @ 派活。内置 agency-agents-zh 的 313 个角色与「项目部」六组 15 人预设，支持分组视图、三级审批流水线与本机共享技能库。
-  en: A named-agent team workbench with animated mascot avatars and fallback model routes, one-to-one chats and group rooms where a lead answers, an auto picker chooses the best-fit member, or only @mentions respond, with configurable @-relay depth. Includes 313 agency-agents-zh roles, a six-group project-department preset, grouped views, a three-stage approval pipeline and a local shared skill library.
+  zh: 聊天应用式的智能体团队工作台：左侧成员与群列表、右侧对话，每个成员有动态表情头像与一组可回退模型路由；群里支持管理员先答、按内容自动挑人、只回应 @，并可设置接力层数。内置 agency-agents-zh 的 313 个角色与「项目部」六组 15 人预设，保留完整成员设置页、分组视图、三级审批流水线与本机共享技能库。
+  en: A chat-app style agent team workbench with a member and group list on the left and the conversation on the right. Each member has an animated mascot avatar and fallback model routes; group rooms support a lead responder, an automatic best-fit picker, @-only replies and configurable relay depth. Includes 313 agency-agents-zh roles, a six-group project-department preset, a full member settings page, grouped views, a three-stage approval pipeline and a local shared skill library.
 screenshots:
   - https://raw.githubusercontent.com/narkco-kang/dsh-team-workbench/main/market/screenshots/team.png
   - https://raw.githubusercontent.com/narkco-kang/dsh-team-workbench/main/market/screenshots/chat.png
