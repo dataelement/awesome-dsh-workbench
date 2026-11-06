@@ -3,8 +3,9 @@ name: 智能体团队 · 技能管理工作台
 nameEn: Agent Team Skill Workbench
 category: operations
 description:
-  zh: 17 名具名智能体的团队工作台：每人专属表情与配色、一组可回退的模型路由，内置执行方→审核员→复核员三级审批流水线，并提供本机共享技能库的增删改查与派发。
-  en: A 17-member named agent team workbench where each member has its own emoji, color and fallback model route, with a three-stage producer→auditor→reviewer approval pipeline and local shared skill library management.
+  zh: 具名智能体团队工作台：每个成员有独立表情与头像、一组可回退的模型路由；内置 agency-agents-zh 的 313 个可选角色与「项目部」六组 15 人预设，支持分组视图、执行方→审核员→复核员三级审批流水线，并管理本机共享技能库。
+  en: A named-agent team workbench where each member has its own emoji and avatar plus fallback model routes, with 313 selectable agency-agents-zh roles, a six-group 15-person project-department preset, grouped views, a three-stage producer-auditor-reviewer pipeline and a local shared skill library.
 screenshots:
   - https://raw.githubusercontent.com/narkco-kang/dsh-team-workbench/main/market/screenshots/team.png
-tarball: https://github.com/narkco-kang/dsh-team-workbench/releases/download/v1.1.0/dsh-team-workbench-1.1.0.tgz
+  - https://raw.githubusercontent.com/narkco-kang/dsh-team-workbench/main/market/screenshots/roles.png
+tarball: https://github.com/narkco-kang/dsh-team-workbench/releases/latest/download/dsh-team-workbench.tgz
