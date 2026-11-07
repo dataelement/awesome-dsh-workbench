@@ -3,7 +3,7 @@ name: 右侧栏快捷导航
 nameEn: Right-sidebar Quick Nav
 category: productivity
 description:
-  zh: 在「打开右侧边栏」图标下方常驻一条竖排图标轨：收起态只露 3 格图标，悬停展开右侧栏的全部标签，点击一步直达；列表读取宿主自己的标签注册表，其它插件注册的标签会自动出现。
-  en: A standing icon rail under the open-right-sidebar button: three icons at rest, expands on hover to every right-sidebar tab, and one click opens the chosen tab. The tab list is read from the host's own registry, so tabs added by other plugins appear automatically.
+  zh: '在「打开右侧边栏」图标下方常驻一条竖排图标轨：收起态只露 3 格图标，悬停展开右侧栏的全部标签，点击一步直达；列表读取宿主自己的标签注册表，其它插件注册的标签会自动出现。'
+  en: 'A standing icon rail under the open-right-sidebar button: three icons at rest, expands on hover to every right-sidebar tab, and one click opens the chosen tab. The tab list is read from the host registry, so tabs added by other plugins appear automatically.'
 screenshots:
   - https://raw.githubusercontent.com/zuoyunlai/dsh-rightbar-quicknav/main/assets/screenshot-rail.png
