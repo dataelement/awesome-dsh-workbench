@@ -1,10 +1,10 @@
 url: https://github.com/gjz18342624299-arch/dsh-contract-review-studio
-name: 合同审查工作台
-nameEn: Contract Review Studio
+name: 合同版本审查台
+nameEn: Contract Revision Studio
 category: productivity
 description:
-  zh: 导入合同、配置审查模板、核对合同要素并处理 AI 审查意见，支持文档编辑和导出。
-  en: Import contracts, configure review templates, verify contract details, and handle AI review findings with document editing and export.
+  zh: 管理企业审查模板版本和合同回稿，并排比对 Word 原件与工作稿，恢复历史快照并导出交付文件。
+  en: Manage versions of enterprise review templates and incoming contract drafts, compare original and working Word documents side by side, restore snapshots, and export deliverables.
 screenshots:
   - https://raw.githubusercontent.com/gjz18342624299-arch/dsh-contract-review-studio/9aa386efe60b405e459c2610713833101b54530d/docs/images/review-workspace.png
   - https://raw.githubusercontent.com/gjz18342624299-arch/dsh-contract-review-studio/9aa386efe60b405e459c2610713833101b54530d/docs/images/onboarding.png
