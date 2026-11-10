@@ -1,3 +1,8 @@
+# 0.10.3: fixed packaged SDK; gateway apiUrl is iframe data, never a script source.
+# Runtime: https://github.com/gjz18342624299-arch/dsh-contract-review-studio/commit/077757d0de12286a3c497773cfbd48efe42b1117
+# Desktop 0.13.2 / Windows 10 19045 x64: native install, restart and open verified.
+# Regression: 12 security tests; 9 shared ONLYOFFICE 9.4.0 checks in an isolated Chromium client.
+# Evidence, screenshot provenance and unverified items: https://github.com/gjz18342624299-arch/dsh-contract-review-studio/blob/75df1b6239b5b6732cb34c61c4261ef182d50019/docs/verification-0.10.3.md
 url: https://github.com/gjz18342624299-arch/dsh-contract-review-studio
 name: 合同版本审查台
 nameEn: Contract Revision Studio
