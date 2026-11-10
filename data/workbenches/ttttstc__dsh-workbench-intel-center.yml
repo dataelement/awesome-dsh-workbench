@@ -1,0 +1,11 @@
+url: https://github.com/ttttstc/dsh-workbench-intel-center
+name: 羊毛大王
+nameEn: Freebie King
+category: research
+description:
+  zh: 按关注主题从 RSS 与社区持续收集免费和低价信息，整理成可筛选的情报卡片，支持备注、处理状态标记和一键生成复核指令。
+  en: Continuously collects free and low-cost offers from RSS feeds and communities, organizes them into filterable cards, and supports notes, status flags, and one-click re-verification prompts.
+screenshots:
+  - https://raw.githubusercontent.com/ttttstc/dsh-workbench-intel-center/main/docs/images/overview.png
+  - https://raw.githubusercontent.com/ttttstc/dsh-workbench-intel-center/main/docs/images/cards.png
+tarball: https://github.com/ttttstc/dsh-workbench-intel-center/releases/latest/download/dsh-workbench-intel-center.tgz
