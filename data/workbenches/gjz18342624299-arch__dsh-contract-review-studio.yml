@@ -1,6 +1,8 @@
 # 0.10.4 UI: CSS-only short selection marker; original palette, layout and business logic retained.
-# Source: https://github.com/gjz18342624299-arch/dsh-contract-review-studio/commit/e9fdc8ab8bd288f876b4cb350c1b262d268ebe67
-# Verification: https://github.com/gjz18342624299-arch/dsh-contract-review-studio/blob/e9fdc8ab8bd288f876b4cb350c1b262d268ebe67/docs/verification-0.10.4.md
+# Source: https://github.com/gjz18342624299-arch/dsh-contract-review-studio/commit/08f1311e3fd37f29c40c15d1e1a79dbcd1dccdcf
+# Positioning: returned drafts, original/working Word comparison, snapshot restore and delivery; README updated.
+# Runtime remains e9fdc8ab8bd288f876b4cb350c1b262d268ebe67; source update above changes documentation only.
+# Verification: https://github.com/gjz18342624299-arch/dsh-contract-review-studio/blob/08f1311e3fd37f29c40c15d1e1a79dbcd1dccdcf/docs/verification-0.10.4.md
 # 0.10.4 native reinstall and updated screenshots are not yet verified; images below are historical 0.10.3 evidence.
 # Historical 0.10.3 security fix: packaged SDK; gateway apiUrl is iframe data, never a script source.
 # Runtime: https://github.com/gjz18342624299-arch/dsh-contract-review-studio/commit/077757d0de12286a3c497773cfbd48efe42b1117
