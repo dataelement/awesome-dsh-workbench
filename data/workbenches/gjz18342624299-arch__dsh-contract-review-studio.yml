@@ -1,8 +1,12 @@
-# 0.10.3: fixed packaged SDK; gateway apiUrl is iframe data, never a script source.
+# 0.10.4 UI: CSS-only short selection marker; original palette, layout and business logic retained.
+# Source: https://github.com/gjz18342624299-arch/dsh-contract-review-studio/commit/e9fdc8ab8bd288f876b4cb350c1b262d268ebe67
+# Verification: https://github.com/gjz18342624299-arch/dsh-contract-review-studio/blob/e9fdc8ab8bd288f876b4cb350c1b262d268ebe67/docs/verification-0.10.4.md
+# 0.10.4 native reinstall and updated screenshots are not yet verified; images below are historical 0.10.3 evidence.
+# Historical 0.10.3 security fix: packaged SDK; gateway apiUrl is iframe data, never a script source.
 # Runtime: https://github.com/gjz18342624299-arch/dsh-contract-review-studio/commit/077757d0de12286a3c497773cfbd48efe42b1117
-# Desktop 0.13.2 / Windows 10 19045 x64: native install, restart and open verified.
-# Regression: 12 security tests; 9 shared ONLYOFFICE 9.4.0 checks in an isolated Chromium client.
-# Evidence, screenshot provenance and unverified items: https://github.com/gjz18342624299-arch/dsh-contract-review-studio/blob/75df1b6239b5b6732cb34c61c4261ef182d50019/docs/verification-0.10.3.md
+# Historical 0.10.3 Desktop 0.13.2 / Windows 10 19045 x64: native install, restart and open verified.
+# Historical regression: 12 security tests; 9 shared ONLYOFFICE 9.4.0 checks in an isolated Chromium client.
+# Historical evidence and screenshot provenance: https://github.com/gjz18342624299-arch/dsh-contract-review-studio/blob/75df1b6239b5b6732cb34c61c4261ef182d50019/docs/verification-0.10.3.md
 url: https://github.com/gjz18342624299-arch/dsh-contract-review-studio
 name: 合同版本审查台
 nameEn: Contract Revision Studio
