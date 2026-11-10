@@ -6,5 +6,5 @@ description:
   zh: 管理企业审查模板版本和合同回稿，并排比对 Word 原件与工作稿，恢复历史快照并导出交付文件。
   en: Manage versions of enterprise review templates and incoming contract drafts, compare original and working Word documents side by side, restore snapshots, and export deliverables.
 screenshots:
-  - https://raw.githubusercontent.com/gjz18342624299-arch/dsh-contract-review-studio/9aa386efe60b405e459c2610713833101b54530d/docs/images/review-workspace.png
-  - https://raw.githubusercontent.com/gjz18342624299-arch/dsh-contract-review-studio/9aa386efe60b405e459c2610713833101b54530d/docs/images/onboarding.png
+  - https://raw.githubusercontent.com/gjz18342624299-arch/dsh-contract-review-studio/75df1b6239b5b6732cb34c61c4261ef182d50019/docs/images/editor-0.10.3.png
+  - https://raw.githubusercontent.com/gjz18342624299-arch/dsh-contract-review-studio/75df1b6239b5b6732cb34c61c4261ef182d50019/docs/images/history-readonly-0.10.3.png
