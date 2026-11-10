@@ -1,0 +1,11 @@
+url: https://github.com/mehrocc/dsh-meeting-workspace
+name: 会议纪要工作台
+nameEn: Meeting Workspace
+category: productivity
+description:
+  zh: 在 DSH Desktop 中安排会议、录音转写、导入逐字稿、整理纪要并跟进任务。
+  en: Schedule meetings, record and transcribe audio, import transcripts, organize notes, and track follow-up tasks in DSH Desktop.
+screenshots:
+  - https://raw.githubusercontent.com/mehrocc/dsh-meeting-workspace/main/docs/images/overview.png
+  - https://raw.githubusercontent.com/mehrocc/dsh-meeting-workspace/main/docs/images/transcript.png
+tarball: https://github.com/mehrocc/dsh-meeting-workspace/releases/latest/download/dsh-meeting-workspace.tgz
