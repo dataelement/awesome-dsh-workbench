@@ -1,14 +1,7 @@
-# 0.10.5: public package, client and page versions aligned; original-color short sidebar marker retained.
-# Source: https://github.com/gjz18342624299-arch/dsh-contract-review-studio/commit/ce614f85ed3791daa86e378b22c5054992b58487
-# Positioning: returned drafts, original/working Word comparison, snapshot restore and delivery; README updated.
-# Runtime changes from public 0.10.4 are version labels only; SDK, business logic and empty public data retained.
-# Verification: https://github.com/gjz18342624299-arch/dsh-contract-review-studio/blob/ce614f85ed3791daa86e378b22c5054992b58487/docs/verification-0.10.5.md
-# 0.10.5 native reinstall and updated screenshots are not yet verified; images below are historical 0.10.3 evidence.
-# Historical 0.10.3 security fix: packaged SDK; gateway apiUrl is iframe data, never a script source.
-# Runtime: https://github.com/gjz18342624299-arch/dsh-contract-review-studio/commit/077757d0de12286a3c497773cfbd48efe42b1117
-# Historical 0.10.3 Desktop 0.13.2 / Windows 10 19045 x64: native install, restart and open verified.
-# Historical regression: 12 security tests; 9 shared ONLYOFFICE 9.4.0 checks in an isolated Chromium client.
-# Historical evidence and screenshot provenance: https://github.com/gjz18342624299-arch/dsh-contract-review-studio/blob/75df1b6239b5b6732cb34c61c4261ef182d50019/docs/verification-0.10.3.md
+# Public 0.10.5: canonical repository URL added to desktopWorkbenches.register.
+# Source: https://github.com/gjz18342624299-arch/dsh-contract-review-studio/commit/c291258a31a5ebb1ceaf6064eaec07d7e9a872f2
+# User reports another-computer acceptance and successful Word saving; authorized native screenshots supplied.
+# Screenshot provenance and test boundaries: https://github.com/gjz18342624299-arch/dsh-contract-review-studio/blob/c291258a31a5ebb1ceaf6064eaec07d7e9a872f2/docs/verification-0.10.5.md
 url: https://github.com/gjz18342624299-arch/dsh-contract-review-studio
 name: 合同版本审查台
 nameEn: Contract Revision Studio
@@ -17,5 +10,5 @@ description:
   zh: 管理企业审查模板版本和合同回稿，并排比对 Word 原件与工作稿，恢复历史快照并导出交付文件。
   en: Manage versions of enterprise review templates and incoming contract drafts, compare original and working Word documents side by side, restore snapshots, and export deliverables.
 screenshots:
-  - https://raw.githubusercontent.com/gjz18342624299-arch/dsh-contract-review-studio/75df1b6239b5b6732cb34c61c4261ef182d50019/docs/images/editor-0.10.3.png
-  - https://raw.githubusercontent.com/gjz18342624299-arch/dsh-contract-review-studio/75df1b6239b5b6732cb34c61c4261ef182d50019/docs/images/history-readonly-0.10.3.png
+  - https://raw.githubusercontent.com/gjz18342624299-arch/dsh-contract-review-studio/c291258a31a5ebb1ceaf6064eaec07d7e9a872f2/docs/images/desktop-projects-0.10.5.png
+  - https://raw.githubusercontent.com/gjz18342624299-arch/dsh-contract-review-studio/c291258a31a5ebb1ceaf6064eaec07d7e9a872f2/docs/images/desktop-editor-0.10.5.png
