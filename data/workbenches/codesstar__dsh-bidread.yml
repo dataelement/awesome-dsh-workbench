@@ -1,0 +1,13 @@
+url: https://github.com/codesstar/dsh-bidread
+name: 招标文件解读
+nameEn: Tender Document Reader
+category: productivity
+description:
+  zh: 读取一个招标项目的全套资料，解读项目速览、补遗变更、废标风险、评分办法和材料清单，每条结论标注原文出处并可点回原页核对。
+  en: Reads a full tender package and extracts an overview, addenda changes, disqualification risks, scoring rules and a materials checklist, each linked to its source page.
+screenshots:
+  - https://raw.githubusercontent.com/codesstar/dsh-bidread/main/docs/images/01-risks.png
+  - https://raw.githubusercontent.com/codesstar/dsh-bidread/main/docs/images/02-changes.png
+  - https://raw.githubusercontent.com/codesstar/dsh-bidread/main/docs/images/03-scoring.png
+  - https://raw.githubusercontent.com/codesstar/dsh-bidread/main/docs/images/04-materials.png
+tarball: https://github.com/codesstar/dsh-bidread/releases/latest/download/dsh-bidread.tgz
