@@ -1,0 +1,14 @@
+# Public 0.10.5: canonical repository URL added to desktopWorkbenches.register.
+# Source: https://github.com/gjz18342624299-arch/dsh-contract-review-studio/commit/c291258a31a5ebb1ceaf6064eaec07d7e9a872f2
+# User reports another-computer acceptance and successful Word saving; authorized native screenshots supplied.
+# Screenshot provenance and test boundaries: https://github.com/gjz18342624299-arch/dsh-contract-review-studio/blob/c291258a31a5ebb1ceaf6064eaec07d7e9a872f2/docs/verification-0.10.5.md
+url: https://github.com/gjz18342624299-arch/dsh-contract-review-studio
+name: 合同版本审查台
+nameEn: Contract Revision Studio
+category: productivity
+description:
+  zh: 管理企业审查模板版本和合同回稿，并排比对 Word 原件与工作稿，恢复历史快照并导出交付文件。
+  en: Manage versions of enterprise review templates and incoming contract drafts, compare original and working Word documents side by side, restore snapshots, and export deliverables.
+screenshots:
+  - https://raw.githubusercontent.com/gjz18342624299-arch/dsh-contract-review-studio/c291258a31a5ebb1ceaf6064eaec07d7e9a872f2/docs/images/desktop-projects-0.10.5.png
+  - https://raw.githubusercontent.com/gjz18342624299-arch/dsh-contract-review-studio/c291258a31a5ebb1ceaf6064eaec07d7e9a872f2/docs/images/desktop-editor-0.10.5.png
