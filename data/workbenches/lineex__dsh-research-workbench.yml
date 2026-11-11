@@ -1,0 +1,9 @@
+url: https://github.com/lineex/dsh-research-workbench
+name: 研究项目工作台
+category: research
+description:
+  zh: 项目流程式研究项目工作台：项目目标=研究目标，主支=研究阶段，分支=从任意位置长出的探索/修正智能体。
+  en: Process-oriented research project workbench: Goal-oriented study design, main-branch research stages, and branch-specific autonomous exploration agents.
+screenshots:
+  - https://raw.githubusercontent.com/lineex/dsh-research-workbench/main/docs/images/workbench-preview.png
+  - https://raw.githubusercontent.com/lineex/dsh-research-workbench/main/docs/images/projects-hub.png
