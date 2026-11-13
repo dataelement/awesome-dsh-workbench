@@ -3,8 +3,8 @@ name: 会议纪要工作台
 nameEn: Meeting Workspace
 category: productivity
 description:
-  zh: 在 DSH Desktop 中安排会议、录音转写、导入逐字稿、整理纪要并跟进任务。
-  en: Schedule meetings, record and transcribe audio, import transcripts, organize notes, and track follow-up tasks in DSH Desktop.
+  zh: 在 DSH Desktop 中安排会议、采集录音与逐字稿，使用已配置的 AI 整理纪要、检索原文并跟进行动事项。
+  en: Schedule meetings, capture audio and transcripts, and use configured AI models to organize notes, search source text, and track action items in DSH Desktop.
 screenshots:
   - https://raw.githubusercontent.com/mehrocc/dsh-meeting-workspace/main/docs/images/overview.png
   - https://raw.githubusercontent.com/mehrocc/dsh-meeting-workspace/main/docs/images/transcript.png
