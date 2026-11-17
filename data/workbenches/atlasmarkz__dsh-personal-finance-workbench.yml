@@ -1,0 +1,12 @@
+url: https://github.com/atlasmarkz/dsh-personal-finance-workbench
+name: 个人财务管理工作台
+nameEn: Personal Finance Workbench
+category: productivity
+description:
+  zh: 读入 Excel/CSV 个人流水，自动体检并映射口径，分析月度收支、储蓄率、支出结构与异常，一次导出可编辑的 xlsx 与一页结论 docx。
+  en: Load personal ledger Excel/CSV data, check data health, map fields, analyze monthly cash flow, savings rate, expense mix and anomalies, then export an editable xlsx plus a one-page docx summary.
+screenshots:
+  - https://raw.githubusercontent.com/atlasmarkz/dsh-personal-finance-workbench/main/docs/screenshots/01-home.png
+  - https://raw.githubusercontent.com/atlasmarkz/dsh-personal-finance-workbench/main/docs/screenshots/02-analysis.png
+  - https://raw.githubusercontent.com/atlasmarkz/dsh-personal-finance-workbench/main/docs/screenshots/03-deliverables.png
+tarball: https://github.com/atlasmarkz/dsh-personal-finance-workbench/releases/latest/download/dsh-personal-finance-workbench.tgz
