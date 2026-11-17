@@ -1,0 +1,12 @@
+url: https://github.com/atlasmarkz/dsh-finops-workbench
+name: 经营分析工作台
+nameEn: FinOps Workbench
+category: data
+description:
+  zh: 读入 Excel/CSV 经营数据，自动体检并映射口径，分析月度趋势、收入结构与异常，一次导出可编辑的 xlsx 与一页结论 docx。
+  en: Load business Excel/CSV data, check data health, map metrics, analyze monthly trends, revenue mix and anomalies, then export an editable xlsx plus a one-page docx summary.
+screenshots:
+  - https://raw.githubusercontent.com/atlasmarkz/dsh-finops-workbench/main/docs/screenshots/01-home.png
+  - https://raw.githubusercontent.com/atlasmarkz/dsh-finops-workbench/main/docs/screenshots/02-analysis.png
+  - https://raw.githubusercontent.com/atlasmarkz/dsh-finops-workbench/main/docs/screenshots/03-deliverables.png
+tarball: https://github.com/atlasmarkz/dsh-finops-workbench/releases/latest/download/dsh-finops-workbench.tgz
