@@ -1,0 +1,13 @@
+url: https://github.com/x68x78-cyber/zmtiu
+name: 自媒体运营工作台
+nameEn: Self-Media Operations Workbench
+category: content
+description:
+  zh: 泛自媒体博主运营工作台：今日灵感、选题会、脚本、发布排期与复盘四率看板五板块一站式跑通「选题→脚本→发布→复盘」主循环，数据本机自动保存。
+  en: A self-media creator operations workbench covering today's inspiration, topic planning, scripting, publishing schedule and review analytics in one dashboard for the idea-to-publish-to-review loop.
+screenshots:
+  - https://raw.githubusercontent.com/x68x78-cyber/zmtiu/main/docs/images/overview.png
+  - https://raw.githubusercontent.com/x68x78-cyber/zmtiu/main/docs/images/topic.png
+  - https://raw.githubusercontent.com/x68x78-cyber/zmtiu/main/docs/images/script.png
+  - https://raw.githubusercontent.com/x68x78-cyber/zmtiu/main/docs/images/publish.png
+  - https://raw.githubusercontent.com/x68x78-cyber/zmtiu/main/docs/images/review.png
