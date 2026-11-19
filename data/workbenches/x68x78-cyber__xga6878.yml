@@ -1,0 +1,13 @@
+url: https://github.com/x68x78-cyber/xga6878
+name: 私域社群运营台
+nameEn: Private Community Operations
+category: operations
+description:
+  zh: '本地私域社群运营工作台：私域概览、社群资产管理、成员分层运营、运营日历、转化漏斗、月度复盘与群话术库，纯前端 localStorage 存储，数据仅保存在本机（v0.2.2）。'
+  en: 'A local private-domain community operations workbench: overview, community assets, member tiering, ops calendar, conversion funnel, monthly review and a script library, with localStorage-only storage and no server dependency.'
+screenshots:
+  - https://raw.githubusercontent.com/x68x78-cyber/xga6878/main/docs/images/home.png
+  - https://raw.githubusercontent.com/x68x78-cyber/xga6878/main/docs/images/groups.png
+  - https://raw.githubusercontent.com/x68x78-cyber/xga6878/main/docs/images/members.png
+  - https://raw.githubusercontent.com/x68x78-cyber/xga6878/main/docs/images/calendar.png
+  - https://raw.githubusercontent.com/x68x78-cyber/xga6878/main/docs/images/funnel.png
