@@ -1,0 +1,10 @@
+url: https://github.com/LeriusLei/dsh-readmate
+name: 随读 · 读书搭档
+nameEn: Readmate · Reading Companion
+category: content
+description:
+  zh: 左边阅读书目，可以划线收藏记录想法，右边和 AI 对话分析提问。想法笔记自动分类存入本地知识库。支持 EPUB、PDF、AZW3、TXT 等文件。
+  en: Read and collect highlights on the left, record your ideas, and talk to AI about or analyze the book on the right. Your notes are classified into your local knowledge base automatically. Supports EPUB, PDF, AZW3, TXT and more.
+screenshots:
+  - https://raw.githubusercontent.com/LeriusLei/dsh-readmate/main/docs/images/01-shelf.png
+  - https://raw.githubusercontent.com/LeriusLei/dsh-readmate/main/docs/images/02-reading.png
