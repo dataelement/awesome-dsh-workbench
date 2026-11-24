@@ -1,0 +1,9 @@
+url: https://github.com/lexmount/video-creation-workbench
+name: 视频内容创作工作台
+nameEn: Video Content Creation Workbench
+category: content
+description:
+  zh: 在 Agent 对话中推进脚本、分镜和制作流程，集中查看口播素材、网源素材和成片，预览 HTML 动效并在本机渲染导出。
+  en: Develop scripts and storyboards with the Agent, organize narration, sourced media and finished videos, preview HTML animations, and render exports locally.
+screenshots:
+  - https://raw.githubusercontent.com/lexmount/video-creation-workbench/b2d0cb553f88d829b911d1130b776d310476146f/docs/images/overview.webp
