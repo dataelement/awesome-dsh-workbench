@@ -1,0 +1,10 @@
+url: https://github.com/LeriusLei/dsh-personalos
+name: PersonalOS-个人任务管理+笔记收纳
+nameEn: PersonalOS
+category: productivity
+description:
+  zh: '把待办、随手采集和随笔收进一个本地工作台：任务总清单与今日待办自动同步，粘贴一段文字就自动起标题、分类、排版，沉淀成可检索的 Markdown 知识库；数据全部留在你自己的电脑里。'
+  en: 'A local-first workbench for tasks and notes: keep a master to-do list in sync with today''s plan, paste any text and it is auto-titled, categorized and filed into a searchable Markdown knowledge base.'
+screenshots:
+  - https://raw.githubusercontent.com/LeriusLei/dsh-personalos/main/docs/screenshots/01-board.png
+  - https://raw.githubusercontent.com/LeriusLei/dsh-personalos/main/docs/screenshots/02-notes.png
